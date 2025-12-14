@@ -1,47 +1,54 @@
-// /DAL/GameOverDoseDbContext.cs
+// Файл: DAL/GameOverDoseDbContext.cs
+// Design-Time Factory для EF Core Tools
 
 using Microsoft.EntityFrameworkCore;
-using GameOverDose.DAL.Entities;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
-namespace GameOverDose.DAL;
-
-public class GameOverDoseDbContext : DbContext
+namespace GameOverDose.DAL
 {
-    public DbSet<User> Users { get; set; }
-    public DbSet<Game> Games { get; set; }
-    public DbSet<Comment> Comments { get; set; }
-    public DbSet<UserGame> UserGames { get; set; }
-    public DbSet<Friend> Friends { get; set; }
-
-    public GameOverDoseDbContext(DbContextOptions<GameOverDoseDbContext> options) : base(options)
+    /// <summary>
+    /// Фабрика для створення DbContext під час виконання міграцій
+    /// </summary>
+    public class GameOverDoseDbContextFactory : IDesignTimeDbContextFactory<GameOverDoseDbContext>
     {
-        // Конструктор для DI
-    }
+        public GameOverDoseDbContext CreateDbContext(string[] args)
+        {
+            // Шлях до appsettings.json у проекті Presentation
+            var presentationPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Presentation");
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
+            // Якщо файл не знайдено в стандартному місці, шукаємо в поточній директорії
+            if (!Directory.Exists(presentationPath))
+            {
+                presentationPath = Directory.GetCurrentDirectory();
+            }
 
-        // ========================================
-        // 1. Налаштування Зв'язку Дружби (самопосилання)
-        // ========================================
+            // Завантаження конфігурації
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(presentationPath)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build();
 
-        modelBuilder.Entity<Friend>()
-            .HasOne(f => f.User1)
-            .WithMany(u => u.FriendsAsUser1)
-            .HasForeignKey(f => f.UserId1)
-            .OnDelete(DeleteBehavior.Restrict); // Запобігає циклічним або каскадним видаленням
+            // Отримання рядка підключення
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-        modelBuilder.Entity<Friend>()
-            .HasOne(f => f.User2)
-            .WithMany(u => u.FriendsAsUser2)
-            .HasForeignKey(f => f.UserId2)
-            .OnDelete(DeleteBehavior.Restrict);
+            // Якщо рядок підключення не знайдено, використовуємо значення за замовчуванням
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                connectionString = "Host=localhost;Port=5432;Database=GameOverDoseDB;Username=postgres;Password=9513";
+                System.Console.WriteLine("⚠️ УВАГА: Використовується рядок підключення за замовчуванням!");
+                System.Console.WriteLine($"Рядок підключення: {connectionString}");
+            }
 
-        // ========================================
-        // 2. Налаштування Composite Key для UserGame (якщо потрібно)
-        // ========================================
-        // Якщо ви хочете, щоб не було двох однакових User/Game записів (Id потрібен лише для EF Core)
-        // modelBuilder.Entity<UserGame>().HasKey(ug => new { ug.UserId, ug.GameId }); 
+            // Створення опцій для DbContext
+            var optionsBuilder = new DbContextOptionsBuilder<GameOverDoseDbContext>();
+            optionsBuilder.UseNpgsql(connectionString);
+
+            // Логування (опціонально)
+            System.Console.WriteLine($"✅ Підключення до бази: {connectionString.Replace(connectionString.Split(';')[3], "Password=***")}");
+
+            return new GameOverDoseDbContext(optionsBuilder.Options);
+        }
     }
 }
