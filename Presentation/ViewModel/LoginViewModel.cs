@@ -1,35 +1,45 @@
-﻿// Файл: ViewModels/LoginViewModel.cs (ФІНАЛЬНО ВИПРАВЛЕНО)
+﻿// Файл: ViewModels/LoginViewModel.cs (ВИПРАВЛЕНО: підключення до БД)
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Presentation.Services;
 using System.Windows.Controls;
 using System.Windows;
-using Presentation.ViewModels;
+using GameOverDose.BLL.Interfaces;
+using System.Threading.Tasks;
+using System.Linq;
+using System;
 
 namespace Presentation.ViewModels
 {
     public partial class LoginViewModel : ObservableObject
     {
         private readonly INavigationService _navigationService;
+        private readonly IUserService _userService;
 
         [ObservableProperty]
         private string email = string.Empty;
+
+        [ObservableProperty]
+        private bool isLoading = false;
+
+        [ObservableProperty]
+        private string errorMessage = string.Empty;
 
         // **********************************************
         // КОНСТРУКТОРИ
         // **********************************************
 
         // ✅ 1. БЕЗПАРАМЕТРИЧНИЙ КОНСТРУКТОР (ДЛЯ ДИЗАЙНЕРА XAML)
-        // Викликає основний конструктор, передаючи null для _navigationService.
-        public LoginViewModel() : this(null)
+        public LoginViewModel() : this(null, null)
         {
         }
 
         // ✅ 2. ОСНОВНИЙ КОНСТРУКТОР (ДЛЯ DI-КОНТЕЙНЕРА)
-        public LoginViewModel(INavigationService navigationService)
+        public LoginViewModel(INavigationService navigationService, IUserService userService)
         {
             _navigationService = navigationService;
+            _userService = userService;
         }
 
         // **********************************************
@@ -37,40 +47,77 @@ namespace Presentation.ViewModels
         // **********************************************
 
         [RelayCommand]
-        private void Login(object parameter)
+        private async Task LoginAsync(object parameter)
         {
-            string password = "";
+            ErrorMessage = string.Empty;
 
+            string password = "";
             if (parameter is PasswordBox pb)
             {
                 password = pb.Password;
             }
 
-            if (Email == "test@game.com" && password == "123")
+            // Валідація
+            if (string.IsNullOrWhiteSpace(Email))
             {
-                MessageBox.Show("Успішний вхід!", "Успіх");
+                ErrorMessage = "Введіть email або нікнейм";
+                MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-                // ✅ ДОДАНО: ПЕРЕВІРКА НА NULL ПЕРЕД ВИКЛИКОМ НАВІГАЦІЇ
-                if (_navigationService != null)
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                ErrorMessage = "Введіть пароль";
+                MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            IsLoading = true;
+
+            try
+            {
+                // ✅ ПІДКЛЮЧЕННЯ ДО БД: Перевірка користувача
+                var user = await _userService.GetUserByNicknameAsync(Email);
+
+                // Якщо не знайдено за нікнеймом, спробуємо за email
+                if (user == null)
                 {
-                    _navigationService.NavigateTo<MainPageViewModel>();
+                    var allUsers = await _userService.GetAllUsersAsync();
+                    user = allUsers.FirstOrDefault(u => u.Email.Equals(Email, StringComparison.OrdinalIgnoreCase));
+                }
+
+                // Перевірка користувача та пароля
+                if (user != null && user.Password == password)
+                {
+                    MessageBox.Show($"Ласкаво просимо, {user.Nickname}!", "Успішний вхід", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // ✅ НАВІГАЦІЯ: Перехід на головну сторінку
+                    if (_navigationService != null)
+                    {
+                        _navigationService.NavigateTo<MainPageViewModel>();
+                    }
                 }
                 else
                 {
-                    // Це означає, що програма була запущена неправильно або ViewModel створено вручну.
-                    MessageBox.Show("Критична помилка: Сервіс навігації не ініціалізовано.", "Помилка DI");
+                    ErrorMessage = "Невірний email/нікнейм або пароль";
+                    MessageBox.Show(ErrorMessage, "Помилка входу", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Невірний email або пароль.", "Помилка");
+                ErrorMessage = $"Помилка підключення: {ex.Message}";
+                MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine($"Login error: {ex}");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
         [RelayCommand]
         private void GoToRegister()
         {
-            // ✅ ДОДАНО: ПЕРЕВІРКА НА NULL ПЕРЕД ВИКЛИКОМ НАВІГАЦІЇ
             if (_navigationService != null)
             {
                 _navigationService.NavigateTo<RegisterViewModel>();

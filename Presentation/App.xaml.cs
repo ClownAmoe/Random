@@ -105,7 +105,7 @@ namespace Presentation
             // ========================================
             services.AddSingleton<MainWindow>();
             services.AddTransient<ShellViewModel>();
-            services.AddTransient<LoginViewModel>();
+            services.AddTransient<LoginViewModel>(); // Тепер використовує IUserService
             services.AddTransient<RegisterViewModel>();
             services.AddTransient<MainPageViewModel>();
             services.AddTransient<GameDetailsViewModel>();

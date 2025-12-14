@@ -4,183 +4,225 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Presentation.ViewModels"
-             mc:Ignorable="d" 
+             mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="1200"
              
              Background="#1C1C1C"
              d:DataContext="{d:DesignInstance vm:MainPageViewModel}">
 
-    <UserControl.Resources>
+	<UserControl.Resources>
 
-        <Style TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#E0E0E0"/>
-        </Style>
+		<Style TargetType="TextBlock">
+			<Setter Property="Foreground" Value="#E0E0E0"/>
+		</Style>
 
-        <Style TargetType="TextBox">
-            <Setter Property="Background" Value="#252525"/>
-            <Setter Property="Foreground" Value="#E0E0E0"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="5,0"/>
-            <Setter Property="CaretBrush" Value="#FF3030"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
+		<Style TargetType="TextBox">
+			<Setter Property="Background" Value="#252525"/>
+			<Setter Property="Foreground" Value="#E0E0E0"/>
+			<Setter Property="BorderBrush" Value="#444444"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="Padding" Value="5,0"/>
+			<Setter Property="CaretBrush" Value="#FF3030"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+		</Style>
 
-        <Style x:Key="GameCardButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#101010"/>
-            <Setter Property="BorderBrush" Value="#333333"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="10"/>
-            <Setter Property="Width" Value="200"/>
-            <Setter Property="Height" Value="280"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
+		<Style x:Key="GameCardButtonStyle" TargetType="Button">
+			<Setter Property="Background" Value="#101010"/>
+			<Setter Property="BorderBrush" Value="#333333"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="Margin" Value="10"/>
+			<Setter Property="Width" Value="200"/>
+			<Setter Property="Height" Value="280"/>
+			<Setter Property="Cursor" Value="Hand"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Button">
+						<Border x:Name="border"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="BorderBrush" Value="#FF3030"/>
-                                <Setter TargetName="border" Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Color="#FF3030" Opacity="0.5" ShadowDepth="0" BlurRadius="5"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </UserControl.Resources>
+							<ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+						</Border>
+						<ControlTemplate.Triggers>
+							<Trigger Property="IsMouseOver" Value="True">
+								<Setter TargetName="border" Property="BorderBrush" Value="#FF3030"/>
+								<Setter TargetName="border" Property="Effect">
+									<Setter.Value>
+										<DropShadowEffect Color="#FF3030" Opacity="0.5" ShadowDepth="0" BlurRadius="5"/>
+									</Setter.Value>
+								</Setter>
+							</Trigger>
+						</ControlTemplate.Triggers>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+	</UserControl.Resources>
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+	<Grid Margin="20">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+		<Grid Grid.Row="0" Margin="0,0,0,20">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="Auto"/>
+			</Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0" 
-                       Text="GAME LIBRARY" 
-                       FontSize="30" 
-                       FontWeight="ExtraBold" 
+			<TextBlock Grid.Column="0"
+                       Text="GAME LIBRARY"
+                       FontSize="30"
+                       FontWeight="ExtraBold"
                        Foreground="#E0E0E0"
                        VerticalAlignment="Center"/>
 
-            <DockPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
-                <TextBox Width="250" 
-                         Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" 
-                         VerticalContentAlignment="Center" 
+			<DockPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
+				<TextBox Width="250"
+                         Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
+                         VerticalContentAlignment="Center"
                          Margin="0,0,5,0"
                          Height="35"/>
 
-                <Button Content="🔍" 
-                        Width="35" 
+				<Button Content="🔍"
+                        Width="35"
                         Height="35"
-                        Background="#FF3030" 
-                        Foreground="White" 
-                        FontWeight="Bold" 
+                        Background="#FF3030"
+                        Foreground="White"
+                        FontWeight="Bold"
                         FontSize="16"/>
-            </DockPanel>
+			</DockPanel>
+		</Grid>
 
-        </Grid>
+		<Grid Grid.Row="1">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="220"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" Margin="0,0,25,0">
-                <TextBlock Text="FILTERS" 
-                           FontSize="20" 
-                           FontWeight="Bold" 
-                           Foreground="#FF3030" 
+			<StackPanel Grid.Column="0" Margin="0,0,25,0">
+				<TextBlock Text="FILTERS"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           Foreground="#FF3030"
                            Margin="0,0,0,10"/>
 
-                <Border BorderBrush="#333333" 
-                        BorderThickness="1" 
+				<Border BorderBrush="#333333"
+                        BorderThickness="1"
                         Background="#101010"
                         CornerRadius="5"
-                        Padding="15" 
+                        Padding="15"
                         Height="200">
-                    <TextBlock Text="Filter options go here (Genre, Platform, Price, etc.)"
-                               Foreground="#888888" 
+					<TextBlock Text="Filter options go here (Genre, Platform, Price, etc.)"
+                               Foreground="#888888"
                                TextWrapping="Wrap"/>
-                </Border>
-            </StackPanel>
+				</Border>
+			</StackPanel>
 
-            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-                <ItemsControl x:Name="GameItemsControl" ItemsSource="{Binding Games}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0, 0, 0, 10"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
+			<ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+				<ItemsControl x:Name="GameItemsControl" ItemsSource="{Binding Games}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<WrapPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0, 0, 0, 10"/>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
 
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Style="{StaticResource GameCardButtonStyle}"
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Button Style="{StaticResource GameCardButtonStyle}"
                                     Command="{Binding DataContext.GoToGameDetailsCommand, 
                                                      RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
                                     CommandParameter="{Binding}">
 
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
+								<Grid>
+									<Grid.RowDefinitions>
+										<RowDefinition Height="*"/>
+										<RowDefinition Height="Auto"/>
+									</Grid.RowDefinitions>
 
-                                    <Border Grid.Row="0" Background="#252525" CornerRadius="8,8,0,0">
-                                        <TextBlock Text="GAME COVER" 
-                                                   FontSize="18" 
-                                                   HorizontalAlignment="Center" 
-                                                   VerticalAlignment="Center" 
-                                                   Foreground="#888888"/>
-                                    </Border>
+									<!-- ✅ ВИПРАВЛЕНО: Відображення зображення гри -->
+									<Border Grid.Row="0" Background="#252525" CornerRadius="8,8,0,0">
+										<Grid>
+											<!-- Зображення гри (якщо є URL) -->
+											<Image Source="{Binding ImageSource}"
+                                                   Stretch="UniformToFill"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center">
+												<Image.Style>
+													<Style TargetType="Image">
+														<Setter Property="Visibility" Value="Visible"/>
+														<Style.Triggers>
+															<DataTrigger Binding="{Binding ImageSource}" Value="">
+																<Setter Property="Visibility" Value="Collapsed"/>
+															</DataTrigger>
+														</Style.Triggers>
+													</Style>
+												</Image.Style>
+											</Image>
 
-                                    <Grid Grid.Row="1" Margin="10" VerticalAlignment="Center">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
+											<!-- Плейсхолдер (якщо зображення немає) -->
+											<TextBlock Text="🎮"
+                                                       FontSize="48"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="#888888">
+												<TextBlock.Style>
+													<Style TargetType="TextBlock">
+														<Setter Property="Visibility" Value="Collapsed"/>
+														<Style.Triggers>
+															<DataTrigger Binding="{Binding ImageSource}" Value="">
+																<Setter Property="Visibility" Value="Visible"/>
+															</DataTrigger>
+														</Style.Triggers>
+													</Style>
+												</TextBlock.Style>
+											</TextBlock>
+										</Grid>
+									</Border>
 
-                                        <TextBlock Grid.Column="0" 
-                                                   Text="{Binding Title}" 
-                                                   FontWeight="SemiBold" 
+									<Grid Grid.Row="1" Margin="10" VerticalAlignment="Center">
+										<Grid.RowDefinitions>
+											<RowDefinition Height="Auto"/>
+											<RowDefinition Height="Auto"/>
+										</Grid.RowDefinitions>
+
+										<TextBlock Grid.Row="0"
+                                                   Text="{Binding Title}"
+                                                   FontWeight="SemiBold"
                                                    FontSize="14"
-                                                   TextWrapping="Wrap" 
+                                                   TextWrapping="Wrap"
                                                    VerticalAlignment="Center"
-                                                   Foreground="White"/>
+                                                   Foreground="White"
+                                                   Margin="0,0,0,5"/>
 
-                                        <TextBlock Grid.Column="1" 
-                                                   Text="{Binding Price, StringFormat={}{0:C}}" 
-                                                   FontWeight="Bold" 
-                                                   Foreground="#FF3030" 
-                                                   FontSize="15"
-                                                   VerticalAlignment="Center"
-                                                   Margin="10,0,0,0"/>
-                                    </Grid>
-                                </Grid>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Grid>
-    </Grid>
+										<!-- ✅ ВИПРАВЛЕНО: Відображення ціни -->
+										<TextBlock Grid.Row="1"
+                                                   FontWeight="Bold"
+                                                   Foreground="#FF3030"
+                                                   FontSize="16"
+                                                   HorizontalAlignment="Center">
+											<TextBlock.Style>
+												<Style TargetType="TextBlock">
+													<Setter Property="Text" Value="{Binding Price, StringFormat={}{0:C2}}"/>
+													<Style.Triggers>
+														<DataTrigger Binding="{Binding Price}" Value="0">
+															<Setter Property="Text" Value="FREE"/>
+															<Setter Property="Foreground" Value="#10AA10"/>
+														</DataTrigger>
+													</Style.Triggers>
+												</Style>
+											</TextBlock.Style>
+										</TextBlock>
+									</Grid>
+								</Grid>
+							</Button>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
+		</Grid>
+	</Grid>
 </UserControl>

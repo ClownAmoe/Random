@@ -1,17 +1,15 @@
-﻿// Файл: ViewModels/MainPageViewModel.cs (ФІНАЛЬНЕ ВИПРАВЛЕННЯ CS1061)
+﻿// Файл: ViewModels/MainPageViewModel.cs (ВИПРАВЛЕНО: ціна та зображення)
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GameOverDose.BLL.Interfaces;
 using Presentation.Models;
 using Presentation.Services;
-using Presentation.Infrastructure;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Presentation.ViewModels
 {
@@ -72,22 +70,27 @@ namespace Presentation.ViewModels
             {
                 var dalGames = await _gameService.GetTopRatedGamesAsync(20);
 
-                // ✅ ВИПРАВЛЕНО CS1061: Використовуємо ТІЛЬКИ dalGame.Name
+                // ✅ ВИПРАВЛЕНО: Мапінг ціни та зображення з DAL
                 var presentationGames = dalGames.Select(g => new Presentation.Models.Game
                 {
                     Id = g.Id,
                     Name = g.Name,
-                    Title = g.Name, // <-- ВИКОРИСТОВУЄМО ТІЛЬКИ g.Name
-                    Price = 0m, // <-- Присвоюємо 0m, оскільки Price відсутній у DAL
-                    // ... мапінг інших властивостей ...
+                    Title = g.Name,
+                    Price = g.Price ?? 0m, // ✅ Правильне мапінг ціни
+                    ImageSource = g.BackgroundImage ?? string.Empty, // ✅ Мапінг зображення
+                    Genre = g.Platforms ?? "Unknown", // Тимчасово використовуємо платформи
+                    Description = $"Rating: {g.Rating:F1}★ | Released: {g.Release?.Year ?? 0}"
                 }).ToList();
 
                 _allGames = presentationGames;
                 Games = new ObservableCollection<Game>(_allGames);
+
+                Debug.WriteLine($"✅ Завантажено {Games.Count} ігор з бази даних");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Помилка завантаження ігор: {ex.Message}");
+                Debug.WriteLine($"❌ Помилка завантаження ігор: {ex.Message}");
+                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
     }
