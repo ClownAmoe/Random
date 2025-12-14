@@ -1,9 +1,11 @@
-﻿using System.Windows;
+﻿// Файл: ViewModels/PasswordBoxHelper.cs (виправлення CS0103, CS8604, CS8600)
+
+using System.Windows;
 using System.Windows.Controls;
 
 namespace Presentation.ViewModels
 {
-    // Цей клас допомагає зв'язати властивість PasswordBox.Password з ViewModel
+    // Клас перейменовано на PasswordBoxHelper, як у коді
     public static class PasswordBoxHelper
     {
         public static readonly DependencyProperty PasswordProperty =
@@ -22,7 +24,9 @@ namespace Presentation.ViewModels
         public static void SetAttach(DependencyObject dp, bool value) => dp.SetValue(AttachProperty, value);
         public static bool GetAttach(DependencyObject dp) => (bool)dp.GetValue(AttachProperty);
 
-        public static string GetPassword(DependencyObject dp) => (string)dp.GetValue(PasswordProperty);
+        // CS8600 / CS8604: Приведення (string)dp.GetValue може бути null. 
+        // Припускаючи, що GetPassword повертає string.Empty, якщо не встановлено.
+        public static string GetPassword(DependencyObject dp) => (string)dp.GetValue(PasswordProperty) ?? string.Empty;
         public static void SetPassword(DependencyObject dp, string value) => dp.SetValue(PasswordProperty, value);
 
         private static bool GetIsUpdating(DependencyObject dp) => (bool)dp.GetValue(IsUpdatingProperty);
@@ -30,7 +34,7 @@ namespace Presentation.ViewModels
 
         private static void OnPasswordPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            PasswordBox passwordBox = sender as PasswordBox;
+            PasswordBox? passwordBox = sender as PasswordBox; // Додано '?'
 
             // 1. Захист від NullReference
             if (passwordBox == null)
@@ -42,7 +46,7 @@ namespace Presentation.ViewModels
             if (!GetIsUpdating(passwordBox))
             {
                 // 2. Встановлюємо нове значення, переконавшись, що воно не null
-                string newPassword = e.NewValue as string;
+                string? newPassword = e.NewValue as string; // Додано '?'
 
                 // Встановлюємо Password, тільки якщо значення відрізняється, щоб мінімізувати виклики
                 if (passwordBox.Password != newPassword)
@@ -58,7 +62,7 @@ namespace Presentation.ViewModels
 
         private static void OnAttachPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            PasswordBox passwordBox = sender as PasswordBox;
+            PasswordBox? passwordBox = sender as PasswordBox; // Додано '?'
 
             if (passwordBox != null)
             {
@@ -76,10 +80,21 @@ namespace Presentation.ViewModels
 
         private static void PasswordChanged(object sender, RoutedEventArgs e)
         {
-            PasswordBox passwordBox = sender as PasswordBox;
+            // ✅ ВИПРАВЛЕННЯ CS0103: 'dp' та 'value' не існували тут.
+            // Ми використовуємо passwordBox та його Password.
+            PasswordBox? passwordBox = sender as PasswordBox; // Додано '?'
+
+            if (passwordBox == null) return;
+
+            // ✅ ВИПРАВЛЕННЯ CS8604 та CS0103: Правильне використання passwordBox
             SetIsUpdating(passwordBox, true);
             SetPassword(passwordBox, passwordBox.Password);
             SetIsUpdating(passwordBox, false);
+
+            // Видалено помилкові рядки:
+            // PasswordBoxHelper.SetIsUpdating(dp!, value);
+            // SetPassword(passwordBox, passwordBox.Password); // Дублювання
+            // SetIsUpdating(passwordBox, false); // Дублювання
         }
     }
 }

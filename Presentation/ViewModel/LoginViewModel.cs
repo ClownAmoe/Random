@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Presentation.Services;
 using System.Windows.Controls;
 using System.Windows;
+using Presentation.ViewModels;
 
 namespace Presentation.ViewModels
 {
@@ -13,7 +14,7 @@ namespace Presentation.ViewModels
         private readonly INavigationService _navigationService;
 
         [ObservableProperty]
-        private string email;
+        private string email = string.Empty;
 
         // **********************************************
         // КОНСТРУКТОРИ

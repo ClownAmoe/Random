@@ -3,7 +3,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using Presentation.Services;
+using Microsoft.EntityFrameworkCore;
 using Presentation.ViewModels;
+using GameOverDose.BLL.Interfaces;
+using GameOverDose.DAL.Interfaces;
+using GameOverDose.DAL.Repositories;
+using GameOverDose.DAL;
 using System;
 
 namespace Presentation
@@ -40,9 +45,18 @@ namespace Presentation
 
             // ... (Views & ViewModels)
             services.AddSingleton<MainWindow>();
-
+            services.AddTransient<IGameService, GameOverDose.BLL.Services.GameService>(); // <-- ВИПРАВЛЕННЯ
+            services.AddTransient<IGameRepository, GameRepository>();
             // ❌ ВИДАЛЯЄМО: services.AddSingleton<ShellViewModel>(); 
+            services.AddDbContext<GameOverDoseDbContext>(options =>
+            {
+                // ВАЖЛИВО: Замініть "YourConnectionString" на ваш фактичний рядок підключення!
+                // Наприклад, для SQLite:
+                options.UseSqlite("Data Source=GameOverDose.db");
 
+                // АБО для SQL Server:
+                // options.UseSqlServer(context.Configuration.GetConnectionString("DefaultConnection")); 
+            });
             // ViewModel сторінок (тепер вони повинні стати Singleton або бути створені вручну)
             // Залишимо їх Transient, оскільки LoginViewModel створюється при запуску.
             services.AddTransient<LoginViewModel>();

@@ -8,10 +8,10 @@ namespace Presentation.Models
     public partial class User : ObservableObject
     {
         [ObservableProperty]
-        private string username;
+        private string username = string.Empty; // ✅ Виправлення CS8618
 
         [ObservableProperty]
-        private string email;
+        private string email = string.Empty;    // ✅ Виправлення CS8618
 
         // Тут можна додати інші поля: дата реєстрації, аватар тощо.
     }

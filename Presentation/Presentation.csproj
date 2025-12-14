@@ -1,17 +1,20 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <Page Remove="App.xaml" />
+    <ProjectReference Include="..\BLL\GameOverDose.BLL.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.22" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.22" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
   </ItemGroup>
 
@@ -25,67 +28,6 @@
     <Compile Update="Models\Game.cs">
       <Generator>MSBuild:Compile</Generator>
     </Compile>
-    <Compile Update="Models\User.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="Services\INavigationService.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="Services\NavigationService.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="ViewModels\MainPageViewModel.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="ViewModels\RegisterViewModel.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="ViewModel\GameDetailsViewModel.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="ViewModel\LoginViewModel.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="ViewModel\MainPageViewModel.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="ViewModel\ProfileViewModel.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="ViewModel\MainViewModel.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="ViewModel\RegisterViewModel.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="Views\LoginView.xaml.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="Views\MainPage.xaml.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="Views\RegisterView.xaml.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="View\GameDetailsView.xaml.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="View\LoginView.xaml.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="View\MainPageView.xaml.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="View\ProfileView.xaml.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-    <Compile Update="View\RegisterView.xaml.cs">
-      <Generator>MSBuild:Compile</Generator>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="NewFolder\" />
   </ItemGroup>
 
   <ItemGroup>
