@@ -9,7 +9,7 @@ namespace GameOverDose.DAL
 {
     public static class DatabaseSeeder
     {
-        public static void Seed(GameOverDoseDbContextFactory context)
+        public static void Seed(GameOverDoseDbContext context)
         {
             // Перевірка чи база даних порожня
             if (context.Users.Any())
