@@ -1,0 +1,98 @@
+﻿<Window x:Class="Presentation.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Presentation"
+        mc:Ignorable="d"
+        Title="GameOverDose" Height="800" Width="1300"
+        
+        Background="#181818">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#101010"/>
+            <Setter Property="Foreground" Value="#FF3030"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#252525"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#AA1010"/>
+                                <Setter Property="BorderBrush" Value="#FF3030"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="{Binding IsHeaderVisible, Converter={StaticResource BoolToVisibility}, FallbackValue=Auto, TargetNullValue=0}"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" 
+                Background="#080808" 
+                Padding="15" 
+                BorderBrush="#FF3030" 
+                BorderThickness="0,0,0,2"  Visibility="{Binding IsHeaderVisible, Converter={StaticResource BoolToVisibility}}">
+
+            <StackPanel Orientation="Horizontal">
+                <Button Content="⬅️ Назад" 
+                        Command="{Binding GoBackCommand}" 
+                        Style="{StaticResource NavButtonStyle}" 
+                        Margin="0,0,15,0"/>
+
+                <Button Content="🏡 Головна" 
+                        Command="{Binding GoHomeCommand}"
+                        Style="{StaticResource NavButtonStyle}"
+                        Margin="0,0,15,0"/>
+
+                <Button Content="👤 Профіль" 
+                        Command="{Binding GoToProfileCommand}"
+                        Style="{StaticResource NavButtonStyle}"
+                        Margin="0,0,40,0"/>
+
+                <TextBlock Text="|  GameOverDose" 
+                           Foreground="#E0E0E0" FontSize="18" 
+                           FontWeight="ExtraBold" 
+                           VerticalAlignment="Center">
+                    <TextBlock.Effect>
+                        <DropShadowEffect ShadowDepth="1" Color="#FF3030" Opacity="0.5" BlurRadius="5"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+
+            </StackPanel>
+        </Border>
+
+        <ContentControl Grid.Row="1" Content="{Binding CurrentViewModel}" Margin="0">
+            <ContentControl.Resources>
+                <Style TargetType="ContentControl">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Style>
+            </ContentControl.Resources>
+        </ContentControl>
+
+    </Grid>
+</Window>
