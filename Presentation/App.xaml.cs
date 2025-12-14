@@ -1,7 +1,9 @@
-﻿// Файл: App.xaml.cs (Спрощена версія без ShellViewModel)
+﻿// Файл: App.xaml.cs (Повністю виправлений з підключенням до PostgreSQL)
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using System.Windows;
+using System.IO;
 using Presentation.Services;
 using Microsoft.EntityFrameworkCore;
 using Presentation.ViewModels;
@@ -9,6 +11,7 @@ using GameOverDose.BLL.Interfaces;
 using GameOverDose.DAL.Interfaces;
 using GameOverDose.DAL.Repositories;
 using GameOverDose.DAL;
+using GameOverDose.BLL.Services;
 using System;
 
 namespace Presentation
@@ -16,22 +19,45 @@ namespace Presentation
     public partial class App : Application
     {
         private IServiceProvider _serviceProvider;
+        private IConfiguration _configuration;
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            // ... Створення DI ...
+            // 1. Завантаження конфігурації з appsettings.json
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+            _configuration = builder.Build();
+
+            // 2. Створення DI-контейнера
             var services = new ServiceCollection();
             ConfigureServices(services);
             _serviceProvider = services.BuildServiceProvider();
 
-            // 2. Створюємо MainWindow
+            // 3. Ініціалізація бази даних (застосування міграцій + seed)
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<GameOverDoseDbContext>();
+                try
+                {
+                    dbContext.Database.Migrate();
+                    Console.WriteLine("База даних успішно ініціалізована!");
+
+                    // Заповнення тестовими даними
+                    DatabaseSeeder.Seed(dbContext);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Помилка підключення до бази даних: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Shutdown();
+                    return;
+                }
+            }
+
+            // 4. Створення MainWindow
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
-
-            // ✅ ВИПРАВЛЕНО: Встановлюємо DataContext на ShellViewModel, 
-            // щоб усі команди навігації та CurrentViewModel працювали.
             mainWindow.DataContext = _serviceProvider.GetRequiredService<ShellViewModel>();
-
-            // 4. Показуємо MainWindow
             mainWindow.Show();
 
             base.OnStartup(e);
@@ -39,32 +65,60 @@ namespace Presentation
 
         private void ConfigureServices(IServiceCollection services)
         {
-            // ... (Сервіси залишаються)
+            // ========================================
+            // 1. КОНФІГУРАЦІЯ БАЗИ ДАНИХ (PostgreSQL)
+            // ========================================
+            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+            services.AddDbContext<GameOverDoseDbContext>(options =>
+            {
+                options.UseNpgsql(connectionString);
+                options.EnableSensitiveDataLogging(); // Для дебагу (вимкніть у продакшені)
+            });
+
+            // ========================================
+            // 2. РЕЄСТРАЦІЯ РЕПОЗИТОРІЇВ (DAL)
+            // ========================================
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IGameRepository, GameRepository>();
+            // Додайте інші репозиторії за потреби:
+            // services.AddScoped<ICommentRepository, CommentRepository>();
+            // services.AddScoped<IUserGameRepository, UserGameRepository>();
+
+            // ========================================
+            // 3. РЕЄСТРАЦІЯ СЕРВІСІВ (BLL)
+            // ========================================
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IGameService, GameService>();
+            // Додайте інші сервіси за потреби:
+            // services.AddScoped<ICommentService, CommentService>();
+            // services.AddScoped<IUserGameService, UserGameService>();
+
+            // ========================================
+            // 4. РЕЄСТРАЦІЯ СЕРВІСІВ ПРЕЗЕНТАЦІЙНОГО ШАРУ
+            // ========================================
             services.AddSingleton<IDataService, DataService>();
             services.AddSingleton<INavigationService, NavigationService>();
 
-            // ... (Views & ViewModels)
+            // ========================================
+            // 5. РЕЄСТРАЦІЯ VIEWMODELS
+            // ========================================
             services.AddSingleton<MainWindow>();
-            services.AddTransient<IGameService, GameOverDose.BLL.Services.GameService>(); // <-- ВИПРАВЛЕННЯ
-            services.AddTransient<IGameRepository, GameRepository>();
-            // ❌ ВИДАЛЯЄМО: services.AddSingleton<ShellViewModel>(); 
-            services.AddDbContext<GameOverDoseDbContext>(options =>
-            {
-                // ВАЖЛИВО: Замініть "YourConnectionString" на ваш фактичний рядок підключення!
-                // Наприклад, для SQLite:
-                options.UseSqlite("Data Source=GameOverDose.db");
-
-                // АБО для SQL Server:
-                // options.UseSqlServer(context.Configuration.GetConnectionString("DefaultConnection")); 
-            });
-            // ViewModel сторінок (тепер вони повинні стати Singleton або бути створені вручну)
-            // Залишимо їх Transient, оскільки LoginViewModel створюється при запуску.
+            services.AddTransient<ShellViewModel>();
             services.AddTransient<LoginViewModel>();
             services.AddTransient<RegisterViewModel>();
-            services.AddTransient<ShellViewModel>();
             services.AddTransient<MainPageViewModel>();
             services.AddTransient<GameDetailsViewModel>();
             services.AddTransient<ProfileViewModel>();
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            if (_serviceProvider is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+            base.OnExit(e);
         }
     }
 }
