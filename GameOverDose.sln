@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Presentation", "Presentation\Presentation.csproj", "{EB63D055-5692-4E77-BF65-E38B9BAC0EB2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOverDose.BLL", "BLL\GameOverDose.BLL.csproj", "{BCCE3AB7-F621-4889-8535-E938A6F54D69}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOverDose.DAL", "DAL\GameOverDose.DAL.csproj", "{5FADD75D-314F-4EE1-9E4A-84AFA3FD4EE3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EB63D055-5692-4E77-BF65-E38B9BAC0EB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB63D055-5692-4E77-BF65-E38B9BAC0EB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB63D055-5692-4E77-BF65-E38B9BAC0EB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB63D055-5692-4E77-BF65-E38B9BAC0EB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCCE3AB7-F621-4889-8535-E938A6F54D69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCCE3AB7-F621-4889-8535-E938A6F54D69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCCE3AB7-F621-4889-8535-E938A6F54D69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCCE3AB7-F621-4889-8535-E938A6F54D69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FADD75D-314F-4EE1-9E4A-84AFA3FD4EE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FADD75D-314F-4EE1-9E4A-84AFA3FD4EE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FADD75D-314F-4EE1-9E4A-84AFA3FD4EE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FADD75D-314F-4EE1-9E4A-84AFA3FD4EE3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
