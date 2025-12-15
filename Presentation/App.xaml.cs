@@ -1,6 +1,4 @@
-﻿// Presentation/App.xaml.cs (ФІНАЛЬНЕ ОНОВЛЕННЯ)
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using System.Windows;
 using System.IO;
@@ -67,25 +65,16 @@ namespace Presentation
                 options.EnableSensitiveDataLogging();
             });
 
-            // ========================================
-            // РЕПОЗИТОРІЇ (DAL)
-            // ========================================
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IGameRepository, GameRepository>();
             services.AddScoped<ICommentRepository, CommentRepository>();
-            services.AddScoped<IUserGameRepository, UserGameRepository>(); // ✅ ДОДАНО
+            services.AddScoped<IUserGameRepository, UserGameRepository>();
 
-            // ========================================
-            // СЕРВІСИ (BLL)
-            // ========================================
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IGameService, GameService>();
             services.AddScoped<ICommentService, CommentService>();
-            services.AddScoped<IUserGameService, UserGameService>(); // ✅ ДОДАНО
+            services.AddScoped<IUserGameService, UserGameService>();
 
-            // ========================================
-            // ПРЕЗЕНТАЦІЙНИЙ ШАР
-            // ========================================
             services.AddSingleton<IDataService, DataService>();
 
             services.AddSingleton<IAuthService, AuthService>();
@@ -93,9 +82,6 @@ namespace Presentation
             services.AddSingleton<INavigationService>(provider => provider.GetRequiredService<NavigationService>());
             services.AddSingleton<IGameNavigationService>(provider => provider.GetRequiredService<NavigationService>());
 
-            // ========================================
-            // VIEWMODELS
-            // ========================================
             services.AddSingleton<MainWindow>();
             services.AddTransient<ShellViewModel>();
             services.AddTransient<LoginViewModel>();

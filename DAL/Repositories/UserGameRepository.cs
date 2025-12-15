@@ -1,5 +1,3 @@
-// DAL/Repositories/UserGameRepository.cs (ÕŒ¬»… ‘¿…À)
-
 using GameOverDose.DAL.Entities;
 using GameOverDose.DAL.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -81,11 +79,35 @@ namespace GameOverDose.DAL.Repositories
                 .ToListAsync();
         }
 
+        public async Task<UserGame?> GetByUserAndGameAsync(int userId, int gameId)
+        {
+            return await _context.UserGames
+                .FirstOrDefaultAsync(ug => ug.UserId == userId && ug.GameId == gameId);
+        }
+
         public async Task<int> GetTotalPlaytimeByUserAsync(int userId)
         {
             return await _context.UserGames
                 .Where(ug => ug.UserId == userId)
                 .SumAsync(ug => ug.Hours);
+        }
+
+        public Task<List<UserGame>> GetTopGamesByPlaytimeAsync(int userId, int count)
+        {
+            return Task.FromResult(_context.UserGames
+                .Include(ug => ug.Game)
+                .Where(ug => ug.UserId == userId)
+                .OrderByDescending(ug => ug.Hours)
+                .Take(count)
+                .ToList());
+        }
+
+        public Task<List<UserGame>> GetByStatusAsync(int userId, string status)
+        {
+            return Task.FromResult(_context.UserGames
+                .Include(ug => ug.Game)
+                .Where(ug => ug.UserId == userId && ug.Status == status)
+                .ToList());
         }
     }
 }

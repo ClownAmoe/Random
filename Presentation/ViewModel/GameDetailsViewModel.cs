@@ -18,10 +18,9 @@ namespace Presentation.ViewModels
         private readonly INavigationService _navigationService;
         private readonly IGameService _gameService;
         private readonly ICommentService _commentService;
+        private readonly IAuthService _authService;
 
         private int _currentGameId;
-        // ⚠️ ПЕРЕВІРТЕ: Переконайтеся, що користувач з ID 2 існує в таблиці "users".
-        private int _currentUserId = 2; 
 
         [ObservableProperty]
         private GameModel currentGame = new GameModel();
@@ -44,13 +43,8 @@ namespace Presentation.ViewModels
         [ObservableProperty]
         private bool isLoading = false;
 
-        // **********************************************
-        // КОНСТРУКТОРИ
-        // **********************************************
-
-        public GameDetailsViewModel() : this(null, null, null)
+        public GameDetailsViewModel() : this(null, null, null, null)
         {
-            // Заглушка для дизайнера
             CurrentGame = new GameModel
             {
                 Name = "Cyberpunk 2077",
@@ -63,26 +57,23 @@ namespace Presentation.ViewModels
         public GameDetailsViewModel(
             INavigationService navigationService,
             IGameService gameService,
-            ICommentService commentService)
+            ICommentService commentService,
+            IAuthService authService)
         {
             _navigationService = navigationService;
             _gameService = gameService;
             _commentService = commentService;
+            _authService = authService;
             InitializeRatingStars();
         }
 
-        // **********************************************
-        // ІНІЦІАЛІЗАЦІЯ
-        // **********************************************
-
         public async Task LoadGameAsync(int gameId)
         {
-            _currentGameId = gameId; // Встановлюємо ID одразу
+            _currentGameId = gameId;
             IsLoading = true;
 
             try
             {
-                // Завантаження гри
                 var dalGame = await _gameService.GetGameByIdAsync(gameId);
 
                 if (dalGame != null)
@@ -92,24 +83,20 @@ namespace Presentation.ViewModels
                         Id = dalGame.Id,
                         Title = dalGame.Name,
                         Name = dalGame.Name,
-                        // ⚠️ УВАГА: Якщо ви хочете бачити повний опис, а не конкатенацію,
-                        // вам слід використовувати властивість Description з DAL: dalGame.Description
-                        Description = dalGame.Description, // ВИПРАВЛЕНО: використовуємо оригінальний опис
+                        Description = dalGame.Description,
                         Price = dalGame.Price ?? 0m,
                         ImageSource = dalGame.BackgroundImage ?? string.Empty,
                         Developers = new List<string> { "Розробник невідомий" },
                         ReleaseDate = dalGame.Release ?? DateTime.MinValue
                     };
-                } 
+                }
                 else
                 {
-                    // Якщо гра не знайдена, скидаємо ID і повідомляємо про помилку
                     _currentGameId = 0;
                     MessageBox.Show("Запитувана гра не знайдена в базі даних.", "Помилка завантаження", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return; 
+                    return;
                 }
 
-                // Завантаження коментарів
                 await LoadCommentsAsync();
             }
             catch (Exception ex)
@@ -125,8 +112,8 @@ namespace Presentation.ViewModels
 
         private async Task LoadCommentsAsync()
         {
-            if (_currentGameId == 0) return; // Не намагаємося завантажити коментарі, якщо ID недійсний
-            
+            if (_currentGameId == 0) return;
+
             try
             {
                 var dalComments = await _commentService.GetCommentsByGameAsync(_currentGameId);
@@ -162,10 +149,6 @@ namespace Presentation.ViewModels
             }
         }
 
-        // **********************************************
-        // КОМАНДИ
-        // **********************************************
-
         [RelayCommand]
         private void Follow()
         {
@@ -196,10 +179,15 @@ namespace Presentation.ViewModels
         [RelayCommand]
         private async Task PostCommentAsync()
         {
-            // ✅ ДОДАНА ПЕРЕВІРКА НА ID
-            if (_currentGameId == 0 || _currentUserId == 0)
+            if (!_authService.IsAuthenticated || !_authService.CurrentUserId.HasValue)
             {
-                MessageBox.Show("Неможливо додати коментар: не визначено ID гри або користувача.", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Для додавання коментаря потрібно увійти в систему", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_currentGameId == 0)
+            {
+                MessageBox.Show("Неможливо додати коментар: не визначено ID гри", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
@@ -213,10 +201,9 @@ namespace Presentation.ViewModels
 
             try
             {
-                // Створення коментаря в БД
                 var newComment = new Comment
                 {
-                    UserId = _currentUserId,
+                    UserId = _authService.CurrentUserId.Value,
                     GameId = _currentGameId,
                     Text = NewCommentText,
                     Rating = NewCommentRating,
@@ -224,11 +211,8 @@ namespace Presentation.ViewModels
                 };
 
                 await _commentService.CreateCommentAsync(newComment);
-
-                // Оновлення списку коментарів
                 await LoadCommentsAsync();
 
-                // Очищення форми
                 NewCommentText = string.Empty;
                 NewCommentRating = 5;
                 InitializeRatingStars();
@@ -237,15 +221,14 @@ namespace Presentation.ViewModels
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx) when (dbEx.InnerException is Npgsql.PostgresException pgEx)
             {
-                 // Обробка порушення зовнішнього ключа
-                 if (pgEx.SqlState == "23503")
-                 {
-                    MessageBox.Show("Помилка: Користувач або гра, для якої ви намагаєтесь додати коментар, не існує в базі даних. Перевірте, чи є у базі ID гри: " + _currentGameId + " та ID користувача: " + _currentUserId, "Помилка даних");
-                 }
-                 else
-                 {
+                if (pgEx.SqlState == "23503")
+                {
+                    MessageBox.Show("Помилка: Користувач або гра не існує в базі даних.", "Помилка даних");
+                }
+                else
+                {
                     MessageBox.Show($"Помилка додавання коментаря: {pgEx.Message}", "Помилка БД");
-                 }
+                }
             }
             catch (Exception ex)
             {
@@ -258,10 +241,6 @@ namespace Presentation.ViewModels
             }
         }
     }
-
-    // **********************************************
-    // ДОПОМІЖНІ КЛАСИ
-    // **********************************************
 
     public class GameComment
     {

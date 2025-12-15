@@ -1,34 +1,42 @@
-// BLL/Services/UserGameService.cs (НОВИЙ ФАЙЛ)
-
 using GameOverDose.BLL.Interfaces;
 using GameOverDose.DAL.Entities;
 using GameOverDose.DAL.Interfaces;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace GameOverDose.BLL.Services
 {
     public class UserGameService : IUserGameService
     {
         private readonly IUserGameRepository _userGameRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IGameRepository _gameRepository;
 
-        public UserGameService(IUserGameRepository userGameRepository)
+        public UserGameService(
+            IUserGameRepository userGameRepository,
+            IUserRepository userRepository,
+            IGameRepository gameRepository)
         {
             _userGameRepository = userGameRepository;
+            _userRepository = userRepository;
+            _gameRepository = gameRepository;
         }
 
-        // CRUD методи
-        public Task<List<UserGame>> GetUserGamesAsync(string userNickname)
+        public async Task<List<UserGame>> GetUserGamesAsync(string userNickname)
         {
-            // Примітка: потрібно додати метод пошуку за nickname у репозиторії
-            // Поки що повертаємо порожній список
-            return Task.FromResult(new List<UserGame>());
+            var user = await _userRepository.GetByNicknameAsync(userNickname);
+            if (user == null) return new List<UserGame>();
+
+            return await _userGameRepository.GetByUserIdAsync(user.Id);
         }
 
-        public Task<List<UserGame>> GetGamePlayersAsync(string gameSlug)
+        public async Task<List<UserGame>> GetGamePlayersAsync(string gameSlug)
         {
-            return Task.FromResult(new List<UserGame>());
+            var game = await _gameRepository.GetBySlugAsync(gameSlug);
+            if (game == null) return new List<UserGame>();
+
+            return await _userGameRepository.GetByGameIdAsync(game.Id);
         }
 
         public Task<UserGame?> GetUserGameByIdAsync(int id)
@@ -51,7 +59,6 @@ namespace GameOverDose.BLL.Services
             return _userGameRepository.DeleteAsync(id);
         }
 
-        // Методи роботи з прогресом
         public async Task<bool> AddPlaytimeAsync(int userGameId, int hours)
         {
             var userGame = await _userGameRepository.GetByIdAsync(userGameId);
@@ -80,31 +87,44 @@ namespace GameOverDose.BLL.Services
             return await _userGameRepository.UpdateAsync(userGame);
         }
 
-        // Статистика
-        public Task<int> GetTotalPlaytimeAsync(string userNickname)
+        public async Task<int> GetTotalPlaytimeAsync(string userNickname)
         {
-            // Потрібно додати в репозиторії метод GetByNickname
-            return Task.FromResult(0);
+            var user = await _userRepository.GetByNicknameAsync(userNickname);
+            if (user == null) return 0;
+
+            return await _userGameRepository.GetTotalPlaytimeByUserAsync(user.Id);
         }
 
         public async Task<List<UserGame>> GetTopGamesByPlaytimeAsync(string userNickname, int count)
         {
-            return new List<UserGame>();
+            var user = await _userRepository.GetByNicknameAsync(userNickname);
+            if (user == null) return new List<UserGame>();
+
+            return await _userGameRepository.GetTopGamesByPlaytimeAsync(user.Id, count);
         }
 
-        public Task<List<UserGame>> GetWishlistAsync(string userNickname)
+        public async Task<List<UserGame>> GetWishlistAsync(string userNickname)
         {
-            return Task.FromResult(new List<UserGame>());
+            var user = await _userRepository.GetByNicknameAsync(userNickname);
+            if (user == null) return new List<UserGame>();
+
+            return await _userGameRepository.GetByStatusAsync(user.Id, "wishlist");
         }
 
-        public Task<List<UserGame>> GetActiveGamesAsync(string userNickname)
+        public async Task<List<UserGame>> GetActiveGamesAsync(string userNickname)
         {
-            return Task.FromResult(new List<UserGame>());
+            var user = await _userRepository.GetByNicknameAsync(userNickname);
+            if (user == null) return new List<UserGame>();
+
+            return await _userGameRepository.GetByStatusAsync(user.Id, "playing");
         }
 
-        public Task<List<UserGame>> GetCompletedGamesAsync(string userNickname)
+        public async Task<List<UserGame>> GetCompletedGamesAsync(string userNickname)
         {
-            return Task.FromResult(new List<UserGame>());
+            var user = await _userRepository.GetByNicknameAsync(userNickname);
+            if (user == null) return new List<UserGame>();
+
+            return await _userGameRepository.GetByStatusAsync(user.Id, "completed");
         }
     }
 }

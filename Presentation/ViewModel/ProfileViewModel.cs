@@ -1,6 +1,4 @@
-﻿// Presentation/ViewModels/ProfileViewModel.cs (ВИПРАВЛЕНО: завантаження з БД)
-
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Presentation.Services;
 using Presentation.Models;
@@ -15,9 +13,7 @@ namespace Presentation.ViewModels
     {
         private readonly INavigationService _navigationService;
         private readonly IUserService _userService;
-
-        // ID поточного користувача (в реальному застосунку має братись з AuthService)
-        private int _currentUserId = 2; // Тестовий користувач test@game.com
+        private readonly IAuthService _authService;
 
         [ObservableProperty]
         private User currentUser = new User { Username = "Завантаження...", Email = "" };
@@ -31,37 +27,34 @@ namespace Presentation.ViewModels
         [ObservableProperty]
         private int gamesCount = 0;
 
-        // **********************************************
-        // КОНСТРУКТОРИ
-        // **********************************************
+        public ProfileViewModel() : this(null, null, null) { }
 
-        // ✅ Безпараметричний для дизайнера
-        public ProfileViewModel() : this(null, null) { }
-
-        // ✅ Основний конструктор для DI
-        public ProfileViewModel(INavigationService navigationService, IUserService userService)
+        public ProfileViewModel(INavigationService navigationService, IUserService userService, IAuthService authService)
         {
             _navigationService = navigationService;
             _userService = userService;
+            _authService = authService;
 
-            if (_userService != null)
+            if (_userService != null && _authService != null)
             {
                 LoadUserDataAsync();
             }
         }
 
-        // **********************************************
-        // ЗАВАНТАЖЕННЯ ДАНИХ
-        // **********************************************
-
         private async Task LoadUserDataAsync()
         {
+            if (!_authService.IsAuthenticated || !_authService.CurrentUserId.HasValue)
+            {
+                MessageBox.Show("Користувач не авторизований", "Помилка");
+                _navigationService?.NavigateTo<LoginViewModel>();
+                return;
+            }
+
             IsLoading = true;
 
             try
             {
-                // Завантаження користувача з іграми
-                var user = await _userService.GetUserWithGamesAsync(_currentUserId);
+                var user = await _userService.GetUserWithGamesAsync(_authService.CurrentUserId.Value);
 
                 if (user != null)
                 {
@@ -71,7 +64,6 @@ namespace Presentation.ViewModels
                         Email = user.Email
                     };
 
-                    // Підрахунок статистики
                     GamesCount = user.UserGames?.Count ?? 0;
 
                     int totalHours = 0;
@@ -101,13 +93,10 @@ namespace Presentation.ViewModels
             }
         }
 
-        // **********************************************
-        // КОМАНДИ
-        // **********************************************
-
         [RelayCommand]
         private void Logout()
         {
+            _authService?.Logout();
             MessageBox.Show("Ви вийшли з профілю.", "Вихід");
 
             if (_navigationService != null)
