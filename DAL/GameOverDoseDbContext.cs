@@ -208,7 +208,7 @@ namespace GameOverDose.DAL
             {
                 // Цей метод викличеться, тільки якщо DbContext не налаштовано через DI
                 // Корисно для міграцій
-                optionsBuilder.UseNpgsql("Host=localhost;Database=GameOverDoseDB;Username=postgres;Password=9513");
+                optionsBuilder.UseNpgsql("Host=localhost;Database=GameOverDoseDB;Username=postgres;Password=123123xdd");
             }
 
             // Увімкнути детальне логування (тільки для розробки)

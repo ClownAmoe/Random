@@ -1,56 +1,54 @@
-﻿// Файл: Presentation/Models/Game.cs (ВИПРАВЛЕНО)
-
-#nullable enable
+﻿#nullable enable
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
 
 namespace Presentation.Models
 {
-    // Клас має бути partial і успадковуватись від ObservableObject
     public partial class GameModel : ObservableObject
     {
-        // ----------------------------------------------------
-        // ✅ ВИПРАВЛЕНО: Додано ініціалізацію = string.Empty;
-        // ----------------------------------------------------
-
-        // Властивості для мапінгу з DAL (Title/Name, Price)
+        // Властивості для мапінгу з DAL
         [ObservableProperty]
         private int id;
 
-        // Поле 'name' потрібне для мапінгу з DAL, 
-        // але в DTO для UI ви можете використовувати 'title'
+        // Name використовується для Slug/внутрішньої назви
         [ObservableProperty]
         private string name = string.Empty;
 
-        // Існуючі властивості
+        // Title використовується для відображення в UI
         [ObservableProperty]
-        private string title = string.Empty; // ✅ Ініціалізація
+        private string title = string.Empty;
+
+        // Час гри
+        [ObservableProperty]
+        private int hoursPlayed; // Змінено на int, відповідно до IUserGameService
 
         [ObservableProperty]
-        private string imageSource = string.Empty; // ✅ Ініціалізація
+        private string imageSource = string.Empty;
 
         [ObservableProperty]
-        private string genre = string.Empty; // ✅ Ініціалізація
+        private string genre = string.Empty;
 
         [ObservableProperty]
-        private decimal price; // decimal є value type, не потребує ініціалізації
+        private decimal price;
 
         // **********************************************
         // НОВІ ВЛАСТИВОСТІ ДЛЯ СТОРІНКИ ДЕТАЛЕЙ ГРИ
         // **********************************************
 
         [ObservableProperty]
-        private string description = string.Empty; // ✅ Ініціалізація
+        private string description = string.Empty;
 
-        // ✅ Ініціалізація List<string> новим об'єктом
         [ObservableProperty]
         private List<string> developers = new List<string>();
 
         [ObservableProperty]
-        private string trailerUrl = string.Empty; // ✅ Ініціалізація
+        private string trailerUrl = string.Empty;
 
         [ObservableProperty]
-        private DateTime releaseDate; // DateTime є value type, не потребує ініціалізації
+        private DateTime releaseDate;
+
+        [ObservableProperty]
+        private string status = string.Empty; // Наприклад: playing, completed, wishlist
     }
 }

@@ -6,6 +6,8 @@ using GameOverDose.BLL.Interfaces;
 using System.Windows;
 using System.Threading.Tasks;
 using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace Presentation.ViewModels
 {
@@ -14,6 +16,7 @@ namespace Presentation.ViewModels
         private readonly INavigationService _navigationService;
         private readonly IUserService _userService;
         private readonly IAuthService _authService;
+        private readonly IUserGameService _userGameService; // Нова залежність
 
         [ObservableProperty]
         private User currentUser = new User { Username = "Завантаження...", Email = "" };
@@ -27,15 +30,24 @@ namespace Presentation.ViewModels
         [ObservableProperty]
         private int gamesCount = 0;
 
-        public ProfileViewModel() : this(null, null, null) { }
+        // Колекція ігор для відображення
+        public ObservableCollection<GameModel> UserGames { get; } = new ObservableCollection<GameModel>();
 
-        public ProfileViewModel(INavigationService navigationService, IUserService userService, IAuthService authService)
+        public ProfileViewModel() : this(null, null, null, null) { }
+
+        // ОНОВЛЕНИЙ КОНСТРУКТОР: Додаємо IUserGameService
+        public ProfileViewModel(
+            INavigationService navigationService,
+            IUserService userService,
+            IAuthService authService,
+            IUserGameService userGameService)
         {
             _navigationService = navigationService;
             _userService = userService;
             _authService = authService;
+            _userGameService = userGameService;
 
-            if (_userService != null && _authService != null)
+            if (_userService != null && _authService != null && _userGameService != null)
             {
                 LoadUserDataAsync();
             }
@@ -64,18 +76,37 @@ namespace Presentation.ViewModels
                         Email = user.Email
                     };
 
+                    // Оновлення загального часу та кількості ігор
                     GamesCount = user.UserGames?.Count ?? 0;
+                    TotalPlaytime = $"{user.UserGames?.Sum(ug => ug.Hours) ?? 0} годин";
 
-                    int totalHours = 0;
-                    if (user.UserGames != null)
+                    // ----------------------------------------------------
+                    // ЛОГІКА ЗАВАНТАЖЕННЯ ІГОР З БЕКЕНДУ
+                    // ----------------------------------------------------
+
+                    var userGamesFromService = await _userGameService.GetUserGamesAsync(user.Nickname);
+
+                    UserGames.Clear();
+
+                    if (userGamesFromService != null)
                     {
-                        foreach (var ug in user.UserGames)
+                        foreach (var ug in userGamesFromService.Where(ug => ug.Game != null))
                         {
-                            totalHours += ug.Hours;
+                            // МАПІНГ DAL (UserGame, Game) -> Presentation (GameModel)
+                            UserGames.Add(new GameModel
+                            {
+                                Id = ug.Game.Id,
+                                Title = ug.Game.Name,
+                                Name = ug.Game.Slug,
+                                HoursPlayed = ug.Hours,
+                                Status = ug.Status,
+
+                                // Приклад: інші властивості, якщо вони є у вашій DAL-сутності Game
+                                ImageSource = ug.Game.BackgroundImage ?? string.Empty, 
+                                // Genre = ug.Game.Genre.Name ?? string.Empty,
+                            });
                         }
                     }
-
-                    TotalPlaytime = $"{totalHours} годин";
                 }
                 else
                 {
@@ -93,6 +124,18 @@ namespace Presentation.ViewModels
             }
         }
 
+        // Команда для запуску гри
+        [RelayCommand]
+        private void LaunchGame(GameModel game)
+        {
+            if (game != null)
+            {
+                MessageBox.Show($"Запуск гри: {game.Title}...", "Гра починається");
+            }
+        }
+
+
+        // Існуючі команди
         [RelayCommand]
         private void Logout()
         {

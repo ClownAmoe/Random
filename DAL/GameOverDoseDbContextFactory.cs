@@ -36,7 +36,7 @@ namespace GameOverDose.DAL
             // Якщо рядок підключення не знайдено, використовуємо значення за замовчуванням
             if (string.IsNullOrEmpty(connectionString))
             {
-                connectionString = "Host=localhost;Port=5432;Database=GameOverDoseDB;Username=postgres;Password=9513";
+                connectionString = "Host=localhost;Port=5432;Database=GameOverDoseDB;Username=postgres;Password=123123xdd";
                 System.Console.WriteLine("⚠️ УВАГА: Використовується рядок підключення за замовчуванням!");
                 System.Console.WriteLine($"Рядок підключення: {connectionString}");
             }
