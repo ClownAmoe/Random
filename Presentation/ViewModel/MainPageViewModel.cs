@@ -1,4 +1,4 @@
-﻿// Файл: ViewModels/MainPageViewModel.cs (ВИПРАВЛЕНО: ціна та зображення)
+﻿// Presentation/ViewModels/MainPageViewModel.cs (ВИПРАВЛЕНО: передача ID)
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -17,7 +17,7 @@ namespace Presentation.ViewModels
 
     public partial class MainPageViewModel : ObservableObject
     {
-        private readonly INavigationService _navigationService;
+        private readonly IGameNavigationService _navigationService;
         private readonly IGameService _gameService;
 
         [ObservableProperty]
@@ -28,7 +28,7 @@ namespace Presentation.ViewModels
         [NotifyPropertyChangedFor(nameof(Games))]
         private string _searchTerm = string.Empty;
 
-        public MainPageViewModel(INavigationService navigationService, IGameService gameService)
+        public MainPageViewModel(IGameNavigationService navigationService, IGameService gameService)
         {
             _navigationService = navigationService ?? throw new ArgumentNullException(nameof(navigationService));
             _gameService = gameService ?? throw new ArgumentNullException(nameof(gameService));
@@ -36,14 +36,12 @@ namespace Presentation.ViewModels
         }
 
         [RelayCommand]
-        private void GoToProfile() => _navigationService.NavigateTo<ProfileViewModel>();
-
-        [RelayCommand]
         private void GoToGameDetails(Game selectedGame)
         {
-            if (selectedGame != null)
+            if (selectedGame != null && selectedGame.Id > 0)
             {
-                _navigationService.NavigateTo<GameDetailsViewModel>();
+                Debug.WriteLine($"Навігація до гри ID: {selectedGame.Id}");
+                _navigationService.NavigateToGameDetails(selectedGame.Id);
             }
         }
 
@@ -70,15 +68,16 @@ namespace Presentation.ViewModels
             {
                 var dalGames = await _gameService.GetTopRatedGamesAsync(20);
 
-                // ✅ ВИПРАВЛЕНО: Мапінг ціни та зображення з DAL
                 var presentationGames = dalGames.Select(g => new Presentation.Models.GameModel
                 {
                     Id = g.Id,
                     Name = g.Name,
                     Title = g.Name,
-                    Price = g.Price ?? 0m, // ✅ Правильне мапінг ціни
-                    ImageSource = g.BackgroundImage ?? string.Empty, // ✅ Мапінг зображення
-                    Genre = g.Platforms ?? "Unknown", // Тимчасово використовуємо платформи
+                    Price = g.Price ?? 0m,
+                    ImageSource = string.IsNullOrEmpty(g.BackgroundImage)
+                        ? string.Empty
+                        : g.BackgroundImage,
+                    Genre = g.Platforms ?? "Unknown",
                     Description = $"Rating: {g.Rating:F1}★ | Released: {g.Release?.Year ?? 0}"
                 }).ToList();
 

@@ -1,0 +1,91 @@
+// DAL/Repositories/UserGameRepository.cs (ÕŒ¬»… ‘¿…À)
+
+using GameOverDose.DAL.Entities;
+using GameOverDose.DAL.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace GameOverDose.DAL.Repositories
+{
+    public class UserGameRepository : IUserGameRepository
+    {
+        private readonly GameOverDoseDbContext _context;
+
+        public UserGameRepository(GameOverDoseDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<UserGame?> GetByIdAsync(int id)
+        {
+            return await _context.UserGames
+                .Include(ug => ug.User)
+                .Include(ug => ug.Game)
+                .FirstOrDefaultAsync(ug => ug.Id == id);
+        }
+
+        public async Task<List<UserGame>> GetAllAsync()
+        {
+            return await _context.UserGames
+                .Include(ug => ug.User)
+                .Include(ug => ug.Game)
+                .ToListAsync();
+        }
+
+        public async Task<UserGame> AddAsync(UserGame userGame)
+        {
+            await _context.UserGames.AddAsync(userGame);
+            await _context.SaveChangesAsync();
+            return userGame;
+        }
+
+        public async Task<bool> UpdateAsync(UserGame userGame)
+        {
+            try
+            {
+                _context.UserGames.Update(userGame);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var userGame = await _context.UserGames.FindAsync(id);
+            if (userGame == null) return false;
+
+            _context.UserGames.Remove(userGame);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<List<UserGame>> GetByUserIdAsync(int userId)
+        {
+            return await _context.UserGames
+                .Include(ug => ug.Game)
+                .Where(ug => ug.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<List<UserGame>> GetByGameIdAsync(int gameId)
+        {
+            return await _context.UserGames
+                .Include(ug => ug.User)
+                .Where(ug => ug.GameId == gameId)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetTotalPlaytimeByUserAsync(int userId)
+        {
+            return await _context.UserGames
+                .Where(ug => ug.UserId == userId)
+                .SumAsync(ug => ug.Hours);
+        }
+    }
+}

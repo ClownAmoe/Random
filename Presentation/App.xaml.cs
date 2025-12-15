@@ -1,4 +1,4 @@
-﻿// Presentation/App.xaml.cs (ВИПРАВЛЕНО: додано CommentService)
+﻿// Presentation/App.xaml.cs (ФІНАЛЬНЕ ОНОВЛЕННЯ)
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
@@ -33,7 +33,6 @@ namespace Presentation
             ConfigureServices(services);
             _serviceProvider = services.BuildServiceProvider();
 
-            // Ініціалізація бази даних
             using (var scope = _serviceProvider.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<GameOverDoseDbContext>();
@@ -60,9 +59,6 @@ namespace Presentation
 
         private void ConfigureServices(IServiceCollection services)
         {
-            // ========================================
-            // 1. БАЗА ДАНИХ
-            // ========================================
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
 
             services.AddDbContext<GameOverDoseDbContext>(options =>
@@ -72,27 +68,32 @@ namespace Presentation
             });
 
             // ========================================
-            // 2. РЕПОЗИТОРІЇ (DAL)
+            // РЕПОЗИТОРІЇ (DAL)
             // ========================================
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IGameRepository, GameRepository>();
-            services.AddScoped<ICommentRepository, CommentRepository>(); // ✅ ДОДАНО
+            services.AddScoped<ICommentRepository, CommentRepository>();
+            services.AddScoped<IUserGameRepository, UserGameRepository>(); // ✅ ДОДАНО
 
             // ========================================
-            // 3. СЕРВІСИ (BLL)
+            // СЕРВІСИ (BLL)
             // ========================================
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IGameService, GameService>();
-            services.AddScoped<ICommentService, CommentService>(); // ✅ ДОДАНО
+            services.AddScoped<ICommentService, CommentService>();
+            services.AddScoped<IUserGameService, UserGameService>(); // ✅ ДОДАНО
 
             // ========================================
-            // 4. ПРЕЗЕНТАЦІЙНИЙ ШАР
+            // ПРЕЗЕНТАЦІЙНИЙ ШАР
             // ========================================
             services.AddSingleton<IDataService, DataService>();
-            services.AddSingleton<INavigationService, NavigationService>();
+
+            services.AddSingleton<NavigationService>();
+            services.AddSingleton<INavigationService>(provider => provider.GetRequiredService<NavigationService>());
+            services.AddSingleton<IGameNavigationService>(provider => provider.GetRequiredService<NavigationService>());
 
             // ========================================
-            // 5. VIEWMODELS
+            // VIEWMODELS
             // ========================================
             services.AddSingleton<MainWindow>();
             services.AddTransient<ShellViewModel>();
