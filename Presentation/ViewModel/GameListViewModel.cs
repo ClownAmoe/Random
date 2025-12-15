@@ -15,7 +15,7 @@ namespace Presentation.ViewModels;
 public class GameListViewModel // : BaseViewModel 
 {
     private readonly IGameService _gameService;
-    public ObservableCollection<Game> TopGames { get; set; } = new ObservableCollection<Game>();
+    public ObservableCollection<GameModel> TopGames { get; set; } = new ObservableCollection<GameModel>();
     public ICommand LoadTopGamesCommand { get; }
 
     public GameListViewModel(IGameService gameService)
@@ -34,7 +34,7 @@ public class GameListViewModel // : BaseViewModel
 
             foreach (var dalGame in dalGames)
             {
-                var presentationGame = new Game
+                var presentationGame = new GameModel
                 {
                     Id = dalGame.Id,
                     // ✅ ВИПРАВЛЕНО CS1061: dalGame, ймовірно, має лише Name та Price

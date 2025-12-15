@@ -1,4 +1,4 @@
-﻿// Файл: App.xaml.cs (Повністю виправлений з підключенням до PostgreSQL)
+﻿// Presentation/App.xaml.cs (ВИПРАВЛЕНО: додано CommentService)
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
@@ -23,19 +23,17 @@ namespace Presentation
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            // 1. Завантаження конфігурації з appsettings.json
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
             _configuration = builder.Build();
 
-            // 2. Створення DI-контейнера
             var services = new ServiceCollection();
             ConfigureServices(services);
             _serviceProvider = services.BuildServiceProvider();
 
-            // 3. Ініціалізація бази даних (застосування міграцій + seed)
+            // Ініціалізація бази даних
             using (var scope = _serviceProvider.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<GameOverDoseDbContext>();
@@ -43,8 +41,6 @@ namespace Presentation
                 {
                     dbContext.Database.Migrate();
                     Console.WriteLine("База даних успішно ініціалізована!");
-
-                    // Заповнення тестовими даними
                     DatabaseSeeder.Seed(dbContext);
                 }
                 catch (Exception ex)
@@ -55,7 +51,6 @@ namespace Presentation
                 }
             }
 
-            // 4. Створення MainWindow
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
             mainWindow.DataContext = _serviceProvider.GetRequiredService<ShellViewModel>();
             mainWindow.Show();
@@ -66,46 +61,42 @@ namespace Presentation
         private void ConfigureServices(IServiceCollection services)
         {
             // ========================================
-            // 1. КОНФІГУРАЦІЯ БАЗИ ДАНИХ (PostgreSQL)
+            // 1. БАЗА ДАНИХ
             // ========================================
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
 
             services.AddDbContext<GameOverDoseDbContext>(options =>
             {
                 options.UseNpgsql(connectionString);
-                options.EnableSensitiveDataLogging(); // Для дебагу (вимкніть у продакшені)
+                options.EnableSensitiveDataLogging();
             });
 
             // ========================================
-            // 2. РЕЄСТРАЦІЯ РЕПОЗИТОРІЇВ (DAL)
+            // 2. РЕПОЗИТОРІЇ (DAL)
             // ========================================
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IGameRepository, GameRepository>();
-            // Додайте інші репозиторії за потреби:
-            // services.AddScoped<ICommentRepository, CommentRepository>();
-            // services.AddScoped<IUserGameRepository, UserGameRepository>();
+            services.AddScoped<ICommentRepository, CommentRepository>(); // ✅ ДОДАНО
 
             // ========================================
-            // 3. РЕЄСТРАЦІЯ СЕРВІСІВ (BLL)
+            // 3. СЕРВІСИ (BLL)
             // ========================================
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IGameService, GameService>();
-            // Додайте інші сервіси за потреби:
-            // services.AddScoped<ICommentService, CommentService>();
-            // services.AddScoped<IUserGameService, UserGameService>();
+            services.AddScoped<ICommentService, CommentService>(); // ✅ ДОДАНО
 
             // ========================================
-            // 4. РЕЄСТРАЦІЯ СЕРВІСІВ ПРЕЗЕНТАЦІЙНОГО ШАРУ
+            // 4. ПРЕЗЕНТАЦІЙНИЙ ШАР
             // ========================================
             services.AddSingleton<IDataService, DataService>();
             services.AddSingleton<INavigationService, NavigationService>();
 
             // ========================================
-            // 5. РЕЄСТРАЦІЯ VIEWMODELS
+            // 5. VIEWMODELS
             // ========================================
             services.AddSingleton<MainWindow>();
             services.AddTransient<ShellViewModel>();
-            services.AddTransient<LoginViewModel>(); // Тепер використовує IUserService
+            services.AddTransient<LoginViewModel>();
             services.AddTransient<RegisterViewModel>();
             services.AddTransient<MainPageViewModel>();
             services.AddTransient<GameDetailsViewModel>();

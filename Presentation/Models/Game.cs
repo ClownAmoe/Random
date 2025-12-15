@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace Presentation.Models
 {
     // Клас має бути partial і успадковуватись від ObservableObject
-    public partial class Game : ObservableObject
+    public partial class GameModel : ObservableObject
     {
         // ----------------------------------------------------
         // ✅ ВИПРАВЛЕНО: Додано ініціалізацію = string.Empty;

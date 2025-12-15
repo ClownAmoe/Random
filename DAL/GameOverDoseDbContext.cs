@@ -63,6 +63,9 @@ namespace GameOverDose.DAL
                 entity.HasIndex(g => g.Rating)
                     .HasDatabaseName("idx_games_rating");
 
+                entity.Property(g => g.Description)
+                    .HasColumnName("description_text");
+
                 // Налаштування точності для decimal
                 entity.Property(g => g.Price)
                     .HasColumnType("decimal(10,2)");
@@ -205,7 +208,7 @@ namespace GameOverDose.DAL
             {
                 // Цей метод викличеться, тільки якщо DbContext не налаштовано через DI
                 // Корисно для міграцій
-                optionsBuilder.UseNpgsql("Host=localhost;Database=GameOverDoseDB;Username=postgres;Password=9513");
+                optionsBuilder.UseNpgsql("Host=localhost;Database=GameOverDoseDB;Username=postgres;Password=123123xdd");
             }
 
             // Увімкнути детальне логування (тільки для розробки)

@@ -1,26 +1,30 @@
-﻿// Файл: ViewModels/GameDetailsViewModel.cs (ВИПРАВЛЕНО: коментарі та зображення)
-
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Presentation.Models;
 using Presentation.Services;
+using GameOverDose.BLL.Interfaces;
+using GameOverDose.DAL.Entities;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Linq;
 using System;
+using System.Threading.Tasks;
 
 namespace Presentation.ViewModels
 {
     public partial class GameDetailsViewModel : ObservableObject
     {
         private readonly INavigationService _navigationService;
+        private readonly IGameService _gameService;
+        private readonly ICommentService _commentService;
+
+        private int _currentGameId;
+        // ⚠️ ПЕРЕВІРТЕ: Переконайтеся, що користувач з ID 2 існує в таблиці "users".
+        private int _currentUserId = 2; 
 
         [ObservableProperty]
-        private Game currentGame;
-
-        [ObservableProperty]
-        private List<PriceDataPoint> priceHistory;
+        private GameModel currentGame = new GameModel();
 
         [ObservableProperty]
         private ObservableCollection<GameComment> comments = new();
@@ -38,42 +42,112 @@ namespace Presentation.ViewModels
         private ObservableCollection<RatingStar> ratingStars = new();
 
         [ObservableProperty]
-        private string achievementsProgress = "0/50";
-
-        [ObservableProperty]
-        private ObservableCollection<Achievement> achievementsList = new();
+        private bool isLoading = false;
 
         // **********************************************
         // КОНСТРУКТОРИ
         // **********************************************
 
-        public GameDetailsViewModel() : this(null)
+        public GameDetailsViewModel() : this(null, null, null)
         {
-            // Ініціалізація заглушками для дизайнера
-            CurrentGame = new Game
+            // Заглушка для дизайнера
+            CurrentGame = new GameModel
             {
-                Title = "Cyberpunk 2077",
-                Description = "Велика рольова гра у футуристичному Night City. Ви — V, найманець, який шукає безсмертя.",
-                Developers = new List<string> { "CD Projekt RED", "Digital Scapes" },
-                Price = 59.99m,
-                ImageSource = "cyberpunk_bg.jpg"
+                Name = "Cyberpunk 2077",
+                Description = "Велика рольова гра у футуристичному Night City.",
+                Price = 59.99m
             };
-            LoadPriceHistory();
             InitializeRatingStars();
-            LoadMockComments();
-            LoadMockAchievements();
         }
 
-        public GameDetailsViewModel(INavigationService navigationService)
+        public GameDetailsViewModel(
+            INavigationService navigationService,
+            IGameService gameService,
+            ICommentService commentService)
         {
             _navigationService = navigationService;
+            _gameService = gameService;
+            _commentService = commentService;
             InitializeRatingStars();
-            LoadMockAchievements();
         }
 
         // **********************************************
         // ІНІЦІАЛІЗАЦІЯ
         // **********************************************
+
+        public async Task LoadGameAsync(int gameId)
+        {
+            _currentGameId = gameId; // Встановлюємо ID одразу
+            IsLoading = true;
+
+            try
+            {
+                // Завантаження гри
+                var dalGame = await _gameService.GetGameByIdAsync(gameId);
+
+                if (dalGame != null)
+                {
+                    CurrentGame = new GameModel
+                    {
+                        Id = dalGame.Id,
+                        Title = dalGame.Name,
+                        Name = dalGame.Name,
+                        // ⚠️ УВАГА: Якщо ви хочете бачити повний опис, а не конкатенацію,
+                        // вам слід використовувати властивість Description з DAL: dalGame.Description
+                        Description = dalGame.Description, // ВИПРАВЛЕНО: використовуємо оригінальний опис
+                        Price = dalGame.Price ?? 0m,
+                        ImageSource = dalGame.BackgroundImage ?? string.Empty,
+                        Developers = new List<string> { "Розробник невідомий" },
+                        ReleaseDate = dalGame.Release ?? DateTime.MinValue
+                    };
+                } 
+                else
+                {
+                    // Якщо гра не знайдена, скидаємо ID і повідомляємо про помилку
+                    _currentGameId = 0;
+                    MessageBox.Show("Запитувана гра не знайдена в базі даних.", "Помилка завантаження", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return; 
+                }
+
+                // Завантаження коментарів
+                await LoadCommentsAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка завантаження гри: {ex.Message}", "Помилка");
+                System.Diagnostics.Debug.WriteLine($"Game load error: {ex}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private async Task LoadCommentsAsync()
+        {
+            if (_currentGameId == 0) return; // Не намагаємося завантажити коментарі, якщо ID недійсний
+            
+            try
+            {
+                var dalComments = await _commentService.GetCommentsByGameAsync(_currentGameId);
+
+                Comments.Clear();
+                foreach (var c in dalComments)
+                {
+                    Comments.Add(new GameComment
+                    {
+                        Author = c.User?.Nickname ?? "Анонім",
+                        Text = c.Text ?? "Без тексту",
+                        Date = c.CreatedAt,
+                        Rating = c.Rating ?? 0
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Comments load error: {ex}");
+            }
+        }
 
         private void InitializeRatingStars()
         {
@@ -88,38 +162,6 @@ namespace Presentation.ViewModels
             }
         }
 
-        private void LoadMockComments()
-        {
-            Comments = new ObservableCollection<GameComment>
-            {
-                new GameComment
-                {
-                    Author = "Іван_Геймер",
-                    Text = "Чудова гра! Атмосфера неймовірна, хоча є баги.",
-                    Date = DateTime.Now.AddDays(-5),
-                    Rating = 8
-                },
-                new GameComment
-                {
-                    Author = "Марія_Гравець",
-                    Text = "Графіка вражає, але оптимізація хромає.",
-                    Date = DateTime.Now.AddDays(-2),
-                    Rating = 7
-                }
-            };
-        }
-
-        private void LoadMockAchievements()
-        {
-            AchievementsList = new ObservableCollection<Achievement>
-            {
-                new Achievement { Name = "Перша кров", Description = "Виконайте перше завдання", StatusColor = "#10AA10" },
-                new Achievement { Name = "Легенда Night City", Description = "Досягніть максимального рівня", StatusColor = "#444444" },
-                new Achievement { Name = "Майстер взлому", Description = "Зламайте 50 пристроїв", StatusColor = "#444444" }
-            };
-            AchievementsProgress = $"1/{AchievementsList.Count}";
-        }
-
         // **********************************************
         // КОМАНДИ
         // **********************************************
@@ -127,10 +169,7 @@ namespace Presentation.ViewModels
         [RelayCommand]
         private void Follow()
         {
-            if (CurrentGame != null)
-            {
-                MessageBox.Show($"Ви стежите за грою: {CurrentGame.Title}!", "Сповіщення");
-            }
+            MessageBox.Show($"Ви стежите за грою: {CurrentGame.Name}!", "Сповіщення");
         }
 
         [RelayCommand]
@@ -139,9 +178,7 @@ namespace Presentation.ViewModels
             IsTracking = !IsTracking;
             MessageBox.Show(
                 IsTracking ? "Відстеження розпочато!" : "Відстеження зупинено!",
-                "Tracking",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information
+                "Tracking"
             );
         }
 
@@ -150,7 +187,6 @@ namespace Presentation.ViewModels
         {
             NewCommentRating = rating;
 
-            // Оновлюємо кольори зірок
             for (int i = 0; i < RatingStars.Count; i++)
             {
                 RatingStars[i].Color = (i + 1) <= rating ? "#FFC830" : "#444444";
@@ -158,54 +194,74 @@ namespace Presentation.ViewModels
         }
 
         [RelayCommand]
-        private void PostComment()
+        private async Task PostCommentAsync()
         {
+            // ✅ ДОДАНА ПЕРЕВІРКА НА ID
+            if (_currentGameId == 0 || _currentUserId == 0)
+            {
+                MessageBox.Show("Неможливо додати коментар: не визначено ID гри або користувача.", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(NewCommentText))
             {
                 MessageBox.Show("Введіть текст коментаря", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            // ✅ ДОДАВАННЯ НОВОГО КОМЕНТАРЯ
-            var newComment = new GameComment
+            IsLoading = true;
+
+            try
             {
-                Author = "Поточний користувач", // TODO: Замінити на реального користувача
-                Text = NewCommentText,
-                Date = DateTime.Now,
-                Rating = NewCommentRating
-            };
+                // Створення коментаря в БД
+                var newComment = new Comment
+                {
+                    UserId = _currentUserId,
+                    GameId = _currentGameId,
+                    Text = NewCommentText,
+                    Rating = NewCommentRating,
+                    CreatedAt = DateTime.Now
+                };
 
-            Comments.Insert(0, newComment); // Додаємо на початок списку
+                await _commentService.CreateCommentAsync(newComment);
 
-            // Очищуємо форму
-            NewCommentText = string.Empty;
-            NewCommentRating = 5;
-            InitializeRatingStars();
+                // Оновлення списку коментарів
+                await LoadCommentsAsync();
 
-            MessageBox.Show("Коментар додано!", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+                // Очищення форми
+                NewCommentText = string.Empty;
+                NewCommentRating = 5;
+                InitializeRatingStars();
 
-        private void LoadPriceHistory()
-        {
-            PriceHistory = new List<PriceDataPoint>
+                MessageBox.Show("Коментар додано!", "Успіх");
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx) when (dbEx.InnerException is Npgsql.PostgresException pgEx)
             {
-                new PriceDataPoint { Time = 1, Price = 59.99m },
-                new PriceDataPoint { Time = 2, Price = 49.99m },
-                new PriceDataPoint { Time = 3, Price = 54.99m },
-                new PriceDataPoint { Time = 4, Price = 59.99m }
-            };
+                 // Обробка порушення зовнішнього ключа
+                 if (pgEx.SqlState == "23503")
+                 {
+                    MessageBox.Show("Помилка: Користувач або гра, для якої ви намагаєтесь додати коментар, не існує в базі даних. Перевірте, чи є у базі ID гри: " + _currentGameId + " та ID користувача: " + _currentUserId, "Помилка даних");
+                 }
+                 else
+                 {
+                    MessageBox.Show($"Помилка додавання коментаря: {pgEx.Message}", "Помилка БД");
+                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка додавання коментаря: {ex.Message}", "Помилка");
+                System.Diagnostics.Debug.WriteLine($"Comment post error: {ex}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
     }
 
     // **********************************************
     // ДОПОМІЖНІ КЛАСИ
     // **********************************************
-
-    public class PriceDataPoint
-    {
-        public int Time { get; set; }
-        public decimal Price { get; set; }
-    }
 
     public class GameComment
     {
@@ -222,12 +278,5 @@ namespace Presentation.ViewModels
 
         [ObservableProperty]
         private string color = "#444444";
-    }
-
-    public class Achievement
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string StatusColor { get; set; } = "#444444";
     }
 }

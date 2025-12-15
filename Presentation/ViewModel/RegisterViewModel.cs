@@ -1,71 +1,154 @@
-﻿// Файл: ViewModels/RegisterViewModel.cs
+﻿// Presentation/ViewModels/RegisterViewModel.cs (ВИПРАВЛЕНО: підключення до БД)
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Presentation.Services;
-using System.Windows; // Для демонстрації повідомлень
+using GameOverDose.BLL.Interfaces;
+using GameOverDose.DAL.Entities;
+using System.Windows;
+using System.Threading.Tasks;
+using System;
 
 namespace Presentation.ViewModels
 {
     public partial class RegisterViewModel : ObservableObject
     {
         private readonly INavigationService _navigationService;
+        private readonly IUserService _userService;
 
         // **********************************************
-        // 1. ВЛАСТИВОСТІ ВВЕДЕННЯ ДАНИХ
+        // ВЛАСТИВОСТІ
         // **********************************************
 
         [ObservableProperty]
-        private string username;
+        private string username = string.Empty;
 
         [ObservableProperty]
-        private string email;
+        private string email = string.Empty;
 
-        // Примітка: для паролів у WPF у чистому MVVM краще використовувати 
-        // PasswordBox з прив'язкою через Attached Property, але тут 
-        // ми використовуємо звичайний string для простоти прикладу.
         [ObservableProperty]
-        private string password;
+        private string password = string.Empty;
+
+        [ObservableProperty]
+        private string confirmPassword = string.Empty;
+
+        [ObservableProperty]
+        private bool isLoading = false;
+
+        [ObservableProperty]
+        private string errorMessage = string.Empty;
 
         // **********************************************
-        // 2. КОНСТРУКТОР
+        // КОНСТРУКТОРИ
         // **********************************************
 
-        public RegisterViewModel(INavigationService navigationService)
+        // ✅ Безпараметричний для дизайнера XAML
+        public RegisterViewModel() : this(null, null) { }
+
+        // ✅ Основний конструктор для DI
+        public RegisterViewModel(INavigationService navigationService, IUserService userService)
         {
             _navigationService = navigationService;
+            _userService = userService;
         }
 
         // **********************************************
-        // 3. КОМАНДИ
+        // КОМАНДИ
         // **********************************************
 
-        // Команда для обробки процесу реєстрації
         [RelayCommand]
-        private void Register()
+        private async Task RegisterAsync()
         {
-            // 🛑 У РЕАЛЬНОМУ ДОДАТКУ:
-            // 1. Валідація полів (чи не порожні, чи коректний email, чи сильний пароль).
-            // 2. Виклик сервісу аутентифікації (AuthService.Register(Username, Email, Password)).
+            ErrorMessage = string.Empty;
 
-            if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
+            // Валідація
+            if (string.IsNullOrWhiteSpace(Username))
             {
-                MessageBox.Show("Будь ласка, введіть ім'я користувача та пароль.", "Помилка реєстрації");
+                ErrorMessage = "Введіть ім'я користувача";
+                MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            // Якщо реєстрація успішна, переходимо на сторінку логіну (або одразу на головну)
-            MessageBox.Show($"Користувач {Username} успішно зареєстрований!", "Успіх");
+            if (string.IsNullOrWhiteSpace(Email))
+            {
+                ErrorMessage = "Введіть email";
+                MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
-            // Перехід на сторінку Логіну
-            _navigationService.NavigateTo<LoginViewModel>();
+            if (string.IsNullOrWhiteSpace(Password))
+            {
+                ErrorMessage = "Введіть пароль";
+                MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (Password != ConfirmPassword)
+            {
+                ErrorMessage = "Паролі не співпадають";
+                MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (Password.Length < 3)
+            {
+                ErrorMessage = "Пароль має містити мінімум 3 символи";
+                MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            IsLoading = true;
+
+            try
+            {
+                // Перевірка, чи користувач вже існує
+                var existingUser = await _userService.GetUserByNicknameAsync(Username);
+                if (existingUser != null)
+                {
+                    ErrorMessage = "Користувач з таким нікнеймом вже існує";
+                    MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Створення нового користувача
+                var newUser = new User
+                {
+                    Nickname = Username,
+                    Email = Email,
+                    Password = Password, // ⚠️ В реальному застосунку хешуйте пароль!
+                    Lvl = 1,
+                    Avatar = "default_avatar.png"
+                };
+
+                await _userService.CreateUserAsync(newUser);
+
+                MessageBox.Show($"Користувач {Username} успішно зареєстрований!", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Перехід на сторінку логіну
+                if (_navigationService != null)
+                {
+                    _navigationService.NavigateTo<LoginViewModel>();
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Помилка реєстрації: {ex.Message}";
+                MessageBox.Show(ErrorMessage, "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine($"Registration error: {ex}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
-        // Команда для повернення на сторінку логіну
         [RelayCommand]
         private void GoToLogin()
         {
-            _navigationService.NavigateTo<LoginViewModel>();
+            if (_navigationService != null)
+            {
+                _navigationService.NavigateTo<LoginViewModel>();
+            }
         }
     }
 }

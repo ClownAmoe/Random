@@ -42,6 +42,9 @@ namespace GameOverDose.DAL.Entities
         [Column("release")]
         public DateTime? Release { get; set; }
 
+        [Column("release")]
+        public string Description { get; set; } = string.Empty;
+
         /// <summary>
         /// To Be Announced - чи дата релізу ще не оголошена
         /// </summary>

@@ -13,7 +13,7 @@ using System.Collections.Generic;
 
 namespace Presentation.ViewModels
 {
-    using Game = Presentation.Models.Game;
+    using Game = Presentation.Models.GameModel;
 
     public partial class MainPageViewModel : ObservableObject
     {
@@ -71,7 +71,7 @@ namespace Presentation.ViewModels
                 var dalGames = await _gameService.GetTopRatedGamesAsync(20);
 
                 // ✅ ВИПРАВЛЕНО: Мапінг ціни та зображення з DAL
-                var presentationGames = dalGames.Select(g => new Presentation.Models.Game
+                var presentationGames = dalGames.Select(g => new Presentation.Models.GameModel
                 {
                     Id = g.Id,
                     Name = g.Name,
