@@ -19,5 +19,6 @@ namespace GameOverDose.DAL.Interfaces
         Task<int> GetTotalPlaytimeByUserAsync(int userId);
         Task<List<UserGame>> GetTopGamesByPlaytimeAsync(int userId, int count);
         Task<List<UserGame>> GetByStatusAsync(int userId, string status);
+        Task<bool> UpdateTrackingStatusAsync(int userId, int gameId, bool isTracking);
     }
 }

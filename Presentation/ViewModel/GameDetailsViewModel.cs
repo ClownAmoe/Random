@@ -19,6 +19,7 @@ namespace Presentation.ViewModels
         private readonly IGameService _gameService;
         private readonly ICommentService _commentService;
         private readonly IAuthService _authService;
+        private readonly IUserGameService _userGameService;
 
         private int _currentGameId;
 

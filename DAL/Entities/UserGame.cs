@@ -50,6 +50,9 @@ public class UserGame
     [Column("is_favorite")]
     public bool IsFavorite { get; set; } = false;
 
+    [Column("is_tracking")]
+    public bool IsTracking { get; set; } = false;
+
     // ========================================
     // Навігаційні властивості (зв'язки)
     // ========================================

@@ -109,5 +109,32 @@ namespace GameOverDose.DAL.Repositories
                 .Where(ug => ug.UserId == userId && ug.Status == status)
                 .ToList());
         }
+
+        public async Task<bool> UpdateTrackingStatusAsync(int userId, int gameId, bool isTracking)
+        {
+            var userGame = await _context.UserGames
+                .FirstOrDefaultAsync(ug => ug.UserId == userId && ug.GameId == gameId);
+
+            if (userGame == null)
+            {
+                userGame = new UserGame
+                {
+                    UserId = userId,
+                    GameId = gameId,
+                    IsTracking = isTracking,
+                    Status = "playing",
+                    AddedAt = DateTime.Now
+                };
+                await _context.UserGames.AddAsync(userGame);
+            }
+            else
+            {
+                userGame.IsTracking = isTracking;
+                _context.UserGames.Update(userGame);
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

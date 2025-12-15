@@ -54,9 +54,9 @@ namespace GameOverDose.DAL.Entities
         /// <summary>
         /// URL фонового зображення гри
         /// </summary>
-        [MaxLength(255)]
+        [MaxLength(500)]
         [Column("background_image")]
-        public string BackgroundImage { get; set; } = string.Empty; // <-- ВИПРАВЛЕНО (CS8618)
+        public string BackgroundImage { get; set; } = string.Empty;
 
         /// <summary>
         /// Середній рейтинг гри (0-5)

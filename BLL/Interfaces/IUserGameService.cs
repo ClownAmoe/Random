@@ -82,4 +82,8 @@ public interface IUserGameService
     /// Отримує завершені ігри користувача
     /// </summary>
     Task<List<UserGame>> GetCompletedGamesAsync(string userNickname);
+
+    Task<bool> UpdateTrackingStatusAsync(int userId, int gameId, bool isTracking);
+
+    Task<bool> GetTrackingStatusAsync(int userId, int gameId);
 }

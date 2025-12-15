@@ -126,5 +126,16 @@ namespace GameOverDose.BLL.Services
 
             return await _userGameRepository.GetByStatusAsync(user.Id, "completed");
         }
+
+        public async Task<bool> UpdateTrackingStatusAsync(int userId, int gameId, bool isTracking)
+        {
+            return await _userGameRepository.UpdateTrackingStatusAsync(userId, gameId, isTracking);
+        }
+
+        public async Task<bool> GetTrackingStatusAsync(int userId, int gameId)
+        {
+            var userGame = await _userGameRepository.GetByUserAndGameAsync(userId, gameId);
+            return userGame?.IsTracking ?? false;
+        }
     }
 }
