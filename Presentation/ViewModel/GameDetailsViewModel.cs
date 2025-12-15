@@ -44,14 +44,20 @@ namespace Presentation.ViewModels
         [ObservableProperty]
         private bool isLoading = false;
 
-        public GameDetailsViewModel() : this(null, null, null, null)
+        [ObservableProperty]
+        private bool hasTrailer = false;
+
+        public GameDetailsViewModel() : this(null, null, null, null, null)
         {
             CurrentGame = new GameModel
             {
                 Name = "Cyberpunk 2077",
                 Description = "Велика рольова гра у футуристичному Night City.",
-                Price = 59.99m
+                Price = 59.99m,
+                TrailerUrl = "https://www.youtube.com/embed/8X2kIfS6fb8",
+                ImageSource = "https://media.rawg.io/media/games/26d/26d4437715bee60138dab4a7c8c59c92.jpg"
             };
+            HasTrailer = !string.IsNullOrEmpty(CurrentGame.TrailerUrl);
             InitializeRatingStars();
         }
 
@@ -59,12 +65,14 @@ namespace Presentation.ViewModels
             INavigationService navigationService,
             IGameService gameService,
             ICommentService commentService,
-            IAuthService authService)
+            IAuthService authService,
+            IUserGameService userGameService)
         {
             _navigationService = navigationService;
             _gameService = gameService;
             _commentService = commentService;
             _authService = authService;
+            _userGameService = userGameService;
             InitializeRatingStars();
         }
 
@@ -87,14 +95,27 @@ namespace Presentation.ViewModels
                         Description = dalGame.Description,
                         Price = dalGame.Price ?? 0m,
                         ImageSource = dalGame.BackgroundImage ?? string.Empty,
-                        Developers = new List<string> { "Розробник невідомий" },
+                        TrailerUrl = dalGame.TrailerUrl ?? string.Empty,
+                        Developers = ExtractDevelopers(dalGame),
                         ReleaseDate = dalGame.Release ?? DateTime.MinValue
                     };
+
+                    HasTrailer = !string.IsNullOrEmpty(CurrentGame.TrailerUrl);
+
+                    System.Diagnostics.Debug.WriteLine($"✅ Game loaded: {CurrentGame.Name}");
+                    System.Diagnostics.Debug.WriteLine($"✅ Trailer URL: {CurrentGame.TrailerUrl}");
+                    System.Diagnostics.Debug.WriteLine($"✅ HasTrailer: {HasTrailer}");
+
+                    if (_authService?.IsAuthenticated == true && _authService.CurrentUserId.HasValue)
+                    {
+                        await LoadTrackingStatusAsync();
+                    }
                 }
                 else
                 {
                     _currentGameId = 0;
-                    MessageBox.Show("Запитувана гра не знайдена в базі даних.", "Помилка завантаження", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Запитувана гра не знайдена в базі даних.", "Помилка завантаження",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
@@ -109,6 +130,33 @@ namespace Presentation.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        private async Task LoadTrackingStatusAsync()
+        {
+            if (_currentGameId == 0 || !_authService.CurrentUserId.HasValue) return;
+
+            try
+            {
+                IsTracking = await _userGameService.GetTrackingStatusAsync(
+                    _authService.CurrentUserId.Value,
+                    _currentGameId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Tracking status load error: {ex}");
+            }
+        }
+
+        private List<string> ExtractDevelopers(GameOverDose.DAL.Entities.Game game)
+        {
+            if (string.IsNullOrEmpty(game.Platforms))
+                return new List<string> { "Розробник невідомий" };
+
+            return game.Platforms.Split(',')
+                .Select(p => p.Trim())
+                .Take(3)
+                .ToList();
         }
 
         private async Task LoadCommentsAsync()
@@ -157,20 +205,42 @@ namespace Presentation.ViewModels
         }
 
         [RelayCommand]
-        private void ToggleTracking()
+        private async Task ToggleTrackingAsync()
         {
-            IsTracking = !IsTracking;
-            MessageBox.Show(
-                IsTracking ? "Відстеження розпочато!" : "Відстеження зупинено!",
-                "Tracking"
-            );
+            if (!_authService?.IsAuthenticated == true || !_authService.CurrentUserId.HasValue)
+            {
+                MessageBox.Show("Для відстеження гри потрібно увійти в систему", "Помилка",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_currentGameId == 0) return;
+
+            try
+            {
+                IsTracking = !IsTracking;
+
+                await _userGameService.UpdateTrackingStatusAsync(
+                    _authService.CurrentUserId.Value,
+                    _currentGameId,
+                    IsTracking);
+
+                MessageBox.Show(
+                    IsTracking ? "Відстеження розпочато!" : "Відстеження зупинено!",
+                    "Tracking"
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка оновлення статусу: {ex.Message}", "Помилка");
+                System.Diagnostics.Debug.WriteLine($"Tracking toggle error: {ex}");
+            }
         }
 
         [RelayCommand]
         private void SetRating(int rating)
         {
             NewCommentRating = rating;
-
             for (int i = 0; i < RatingStars.Count; i++)
             {
                 RatingStars[i].Color = (i + 1) <= rating ? "#FFC830" : "#444444";
@@ -180,21 +250,24 @@ namespace Presentation.ViewModels
         [RelayCommand]
         private async Task PostCommentAsync()
         {
-            if (!_authService.IsAuthenticated || !_authService.CurrentUserId.HasValue)
+            if (!_authService?.IsAuthenticated == true || !_authService.CurrentUserId.HasValue)
             {
-                MessageBox.Show("Для додавання коментаря потрібно увійти в систему", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Для додавання коментаря потрібно увійти в систему", "Помилка",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             if (_currentGameId == 0)
             {
-                MessageBox.Show("Неможливо додати коментар: не визначено ID гри", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Неможливо додати коментар: не визначено ID гри", "Помилка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(NewCommentText))
             {
-                MessageBox.Show("Введіть текст коментаря", "Помилка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Введіть текст коментаря", "Помилка",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -219,17 +292,6 @@ namespace Presentation.ViewModels
                 InitializeRatingStars();
 
                 MessageBox.Show("Коментар додано!", "Успіх");
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx) when (dbEx.InnerException is Npgsql.PostgresException pgEx)
-            {
-                if (pgEx.SqlState == "23503")
-                {
-                    MessageBox.Show("Помилка: Користувач або гра не існує в базі даних.", "Помилка даних");
-                }
-                else
-                {
-                    MessageBox.Show($"Помилка додавання коментаря: {pgEx.Message}", "Помилка БД");
-                }
             }
             catch (Exception ex)
             {

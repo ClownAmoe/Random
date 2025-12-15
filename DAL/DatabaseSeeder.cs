@@ -1,6 +1,4 @@
-﻿// Файл: DAL/DatabaseSeeder.cs
-
-using GameOverDose.DAL.Entities;
+﻿using GameOverDose.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -11,25 +9,25 @@ namespace GameOverDose.DAL
     {
         public static void Seed(GameOverDoseDbContext context)
         {
-            // Перевірка чи база даних порожня
             if (context.Users.Any())
             {
                 Console.WriteLine("База даних вже містить дані.");
+
+                // ✅ ДОДАНО: Оновлення трейлерів для існуючих ігор
+                UpdateTrailers(context);
                 return;
             }
 
             Console.WriteLine("Заповнення бази даних тестовими даними...");
 
-            // ========================================
-            // 1. ДОДАВАННЯ КОРИСТУВАЧІВ
-            // ========================================
+            // ... (решта коду залишається без змін)
             var users = new[]
             {
                 new User
                 {
                     Nickname = "Іван_Геймер",
                     Email = "ivan@gameoverdose.com",
-                    Password = "hashed_password_123", // В реальному проекті хешуйте!
+                    Password = "hashed_password_123",
                     Avatar = "avatar1.png",
                     Description = "Люблю RPG та стратегії",
                     Lvl = 15
@@ -38,7 +36,7 @@ namespace GameOverDose.DAL
                 {
                     Nickname = "test@game.com",
                     Email = "test@game.com",
-                    Password = "123", // Тестовий користувач для логіну
+                    Password = "123",
                     Avatar = "avatar2.png",
                     Description = "Професійний геймер",
                     Lvl = 25
@@ -57,9 +55,6 @@ namespace GameOverDose.DAL
             context.Users.AddRange(users);
             context.SaveChanges();
 
-            // ========================================
-            // 2. ДОДАВАННЯ ІГОР
-            // ========================================
             var games = new[]
             {
                 new Game
@@ -76,7 +71,8 @@ namespace GameOverDose.DAL
                     Playtime = 60,
                     EsrbRating = "M",
                     Platforms = "PC, PS5, Xbox Series X",
-                    Price = 59.99m
+                    Price = 59.99m,
+                    TrailerUrl = "https://www.youtube.com/embed/8X2kIfS6fb8"
                 },
                 new Game
                 {
@@ -92,7 +88,8 @@ namespace GameOverDose.DAL
                     Playtime = 100,
                     EsrbRating = "M",
                     Platforms = "PC, PS4, Xbox One, Switch",
-                    Price = 39.99m
+                    Price = 39.99m,
+                    TrailerUrl = "https://www.youtube.com/embed/c0i88t0Kacs"
                 },
                 new Game
                 {
@@ -108,7 +105,8 @@ namespace GameOverDose.DAL
                     Playtime = 80,
                     EsrbRating = "M",
                     Platforms = "PC, PS5, Xbox Series X",
-                    Price = 59.99m
+                    Price = 59.99m,
+                    TrailerUrl = "https://www.youtube.com/embed/E3Huy2cdih0"
                 },
                 new Game
                 {
@@ -124,7 +122,8 @@ namespace GameOverDose.DAL
                     Playtime = 200,
                     EsrbRating = "E10+",
                     Platforms = "PC, PS4, Xbox One, Switch, Mobile",
-                    Price = 26.95m
+                    Price = 26.95m,
+                    TrailerUrl = "https://www.youtube.com/embed/MmB9b5njVbA"
                 },
                 new Game
                 {
@@ -140,16 +139,14 @@ namespace GameOverDose.DAL
                     Playtime = 70,
                     EsrbRating = "M",
                     Platforms = "PC, PS5, Xbox Series X",
-                    Price = 29.99m
+                    Price = 29.99m,
+                    TrailerUrl = "https://www.youtube.com/embed/QkkoHAzjnUs"
                 }
             };
 
             context.Games.AddRange(games);
             context.SaveChanges();
 
-            // ========================================
-            // 3. ДОДАВАННЯ КОМЕНТАРІВ
-            // ========================================
             var comments = new[]
             {
                 new Comment
@@ -181,9 +178,6 @@ namespace GameOverDose.DAL
             context.Comments.AddRange(comments);
             context.SaveChanges();
 
-            // ========================================
-            // 4. ДОДАВАННЯ ІГРОВИХ СЕСІЙ
-            // ========================================
             var userGames = new[]
             {
                 new UserGame
@@ -237,9 +231,6 @@ namespace GameOverDose.DAL
             context.UserGames.AddRange(userGames);
             context.SaveChanges();
 
-            // ========================================
-            // 5. ДОДАВАННЯ ДРУЖНІХ ЗВ'ЯЗКІВ
-            // ========================================
             var friends = new[]
             {
                 new Friend
@@ -270,6 +261,43 @@ namespace GameOverDose.DAL
 
             Console.WriteLine("База даних успішно заповнена тестовими даними!");
             Console.WriteLine($"Додано: {users.Length} користувачів, {games.Length} ігор, {comments.Length} коментарів");
+        }
+
+        // ✅ НОВИЙ МЕТОД: Оновлення трейлерів для існуючих ігор
+        private static void UpdateTrailers(GameOverDoseDbContext context)
+        {
+            var trailerUpdates = new Dictionary<string, string>
+            {
+                { "cyberpunk-2077", "https://www.youtube.com/embed/8X2kIfS6fb8" },
+                { "the-witcher-3", "https://www.youtube.com/embed/c0i88t0Kacs" },
+                { "elden-ring", "https://www.youtube.com/embed/E3Huy2cdih0" },
+                { "minecraft", "https://www.youtube.com/embed/MmB9b5njVbA" },
+                { "gta-v", "https://www.youtube.com/embed/QkkoHAzjnUs" }
+            };
+
+            bool hasUpdates = false;
+
+            foreach (var update in trailerUpdates)
+            {
+                var game = context.Games.FirstOrDefault(g => g.Slug == update.Key);
+
+                if (game != null && string.IsNullOrEmpty(game.TrailerUrl))
+                {
+                    game.TrailerUrl = update.Value;
+                    hasUpdates = true;
+                    Console.WriteLine($"✅ Додано трейлер для гри: {game.Name}");
+                }
+            }
+
+            if (hasUpdates)
+            {
+                context.SaveChanges();
+                Console.WriteLine("✅ Трейлери успішно оновлено!");
+            }
+            else
+            {
+                Console.WriteLine("ℹ️ Всі трейлери вже присутні в базі даних.");
+            }
         }
     }
 }

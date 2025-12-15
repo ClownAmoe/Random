@@ -12,6 +12,7 @@
              d:DesignHeight="700" d:DesignWidth="1200">
 
 	<UserControl.Resources>
+		<BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
 
 		<Style TargetType="TextBlock">
 			<Setter Property="Foreground" Value="#E0E0E0"/>
@@ -126,23 +127,58 @@
 
 		<Grid Grid.Row="1">
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="220"/>
+				<ColumnDefinition Width="260"/>
 				<ColumnDefinition Width="*"/>
 				<ColumnDefinition Width="300"/>
 			</Grid.ColumnDefinitions>
 
 			<StackPanel Grid.Column="0" Margin="0,0,25,0">
-				<Border Width="220" Height="220"
+				<Border Width="250" Height="330"
                         Background="#252525"
                         BorderBrush="#FF3030"
                         BorderThickness="1"
                         CornerRadius="5"
                         Margin="0,0,0,25">
-					<TextBlock Text="🎮"
-                               FontSize="72"
-                               VerticalAlignment="Center"
+					<Grid>
+						<Image Source="{Binding CurrentGame.ImageSource}"
+                               Stretch="Uniform"
                                HorizontalAlignment="Center"
-                               Foreground="#888888"/>
+                               VerticalAlignment="Center">
+							<Image.Style>
+								<Style TargetType="Image">
+									<Setter Property="Visibility" Value="Visible"/>
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding CurrentGame.ImageSource}" Value="">
+											<Setter Property="Visibility" Value="Collapsed"/>
+										</DataTrigger>
+										<DataTrigger Binding="{Binding CurrentGame.ImageSource}" Value="{x:Null}">
+											<Setter Property="Visibility" Value="Collapsed"/>
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</Image.Style>
+						</Image>
+
+						<TextBlock Text="🎮"
+                                   FontSize="72"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   Foreground="#888888">
+							<TextBlock.Style>
+								<Style TargetType="TextBlock">
+									<Setter Property="Visibility" Value="Collapsed"/>
+									<Style.Triggers>
+										<DataTrigger Binding="{Binding CurrentGame.ImageSource}" Value="">
+											<Setter Property="Visibility" Value="Visible"/>
+										</DataTrigger>
+										<DataTrigger Binding="{Binding CurrentGame.ImageSource}" Value="{x:Null}">
+											<Setter Property="Visibility" Value="Visible"/>
+										</DataTrigger>
+									</Style.Triggers>
+								</Style>
+							</TextBlock.Style>
+						</TextBlock>
+					</Grid>
 				</Border>
 
 				<TextBlock Text="Your Rating" Style="{StaticResource SectionHeader}"/>
@@ -184,22 +220,84 @@
                                Foreground="#C0C0C0"
                                Margin="0,0,0,25"/>
 
-					<TextBlock Text="Trailer/Gameplay" Style="{StaticResource SectionHeader}" Margin="0,0,0,15"/>
-					<Border Height="350"
-                            Background="#252525"
-                            BorderBrush="#444444"
-                            BorderThickness="1"
-                            Margin="0,0,0,25">
-						<TextBlock Text="📹 Video Player"
-                                   FontSize="24"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Center"
-                                   Foreground="#888888"/>
-					</Border>
+					<!-- ✅ СЕКЦІЯ ТРЕЙЛЕРА -->
+					<StackPanel Visibility="{Binding HasTrailer, Converter={StaticResource BoolToVisibility}}">
+						<TextBlock Text="Trailer/Gameplay"
+                                   Style="{StaticResource SectionHeader}"
+                                   Margin="0,0,0,15"/>
+
+						<Border Height="400"
+                                Background="#1a1a1a"
+                                BorderBrush="#FF3030"
+                                BorderThickness="2"
+                                CornerRadius="5"
+                                Margin="0,0,0,25">
+							<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+								<TextBlock Text="🎬"
+                                           FontSize="72"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,20"/>
+
+								<TextBlock Text="{Binding CurrentGame.Title}"
+                                           FontSize="20"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,10"/>
+
+								<TextBlock Text="Офіційний трейлер"
+                                           FontSize="14"
+                                           Foreground="#999999"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,30"/>
+
+								<Button Content="▶️  Дивитись трейлер на YouTube"
+                                        Click="OpenTrailerButton_Click"
+                                        Background="#FF3030"
+                                        Foreground="White"
+                                        Padding="25,15"
+                                        FontSize="18"
+                                        FontWeight="Bold"
+                                        BorderThickness="0"
+                                        Cursor="Hand">
+									<Button.Style>
+										<Style TargetType="Button">
+											<Setter Property="Template">
+												<Setter.Value>
+													<ControlTemplate TargetType="Button">
+														<Border x:Name="border"
+                                                                Background="{TemplateBinding Background}"
+                                                                CornerRadius="8"
+                                                                Padding="{TemplateBinding Padding}">
+															<ContentPresenter HorizontalAlignment="Center"
+                                                                              VerticalAlignment="Center"/>
+														</Border>
+														<ControlTemplate.Triggers>
+															<Trigger Property="IsMouseOver" Value="True">
+																<Setter TargetName="border" Property="Background" Value="#AA1010"/>
+															</Trigger>
+															<Trigger Property="IsPressed" Value="True">
+																<Setter TargetName="border" Property="Background" Value="#CC2020"/>
+															</Trigger>
+														</ControlTemplate.Triggers>
+													</ControlTemplate>
+												</Setter.Value>
+											</Setter>
+										</Style>
+									</Button.Style>
+								</Button>
+
+								<TextBlock Text="Відкриється в вашому браузері"
+                                           FontSize="12"
+                                           Foreground="#666666"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,15,0,0"/>
+							</StackPanel>
+						</Border>
+					</StackPanel>
 
 					<TextBlock Text="User Reviews &amp; Discussion" Style="{StaticResource SectionHeader}"/>
 
-					<!-- ✅ ВИПРАВЛЕНО: Форма додавання коментаря -->
 					<Border Background="#101010" BorderBrush="#333333" BorderThickness="1" CornerRadius="5" Padding="15" Margin="0,0,0,15">
 						<StackPanel>
 							<TextBlock Text="Залиште свій відгук" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,10"/>
@@ -245,7 +343,6 @@
 						</StackPanel>
 					</Border>
 
-					<!-- Список коментарів -->
 					<ItemsControl ItemsSource="{Binding Comments}">
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
@@ -290,28 +387,7 @@
 				</TextBlock>
 
 				<TextBlock Text="Achievements" Style="{StaticResource SectionHeader}"/>
-				<TextBlock Text="{Binding AchievementsProgress, StringFormat='Completed: {0}'}" Margin="0,0,0,10" Foreground="#C0C0C0"/>
-				<ItemsControl ItemsSource="{Binding AchievementsList}" Height="250">
-					<ItemsControl.ItemTemplate>
-						<DataTemplate>
-							<Grid Margin="0,0,0,8">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="Auto"/>
-									<ColumnDefinition Width="*"/>
-								</Grid.ColumnDefinitions>
-
-								<Border Grid.Column="0" Width="30" Height="30" CornerRadius="3" Background="{Binding StatusColor}" Margin="0,0,10,0">
-									<TextBlock Text="★" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
-								</Border>
-
-								<StackPanel Grid.Column="1" VerticalAlignment="Center">
-									<TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" FontSize="13"/>
-									<TextBlock Text="{Binding Description}" FontSize="11" Foreground="#888888" TextTrimming="CharacterEllipsis"/>
-								</StackPanel>
-							</Grid>
-						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
+				<TextBlock Text="Coming soon..." Margin="0,0,0,10" Foreground="#C0C0C0"/>
 			</StackPanel>
 		</Grid>
 	</Grid>
