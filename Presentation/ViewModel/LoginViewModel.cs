@@ -1,6 +1,4 @@
-﻿// Файл: ViewModels/LoginViewModel.cs (ВИПРАВЛЕНО: підключення до БД)
-
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Presentation.Services;
 using System.Windows.Controls;
@@ -16,6 +14,7 @@ namespace Presentation.ViewModels
     {
         private readonly INavigationService _navigationService;
         private readonly IUserService _userService;
+        private readonly IAuthService _authService; // ✅ ДОДАНО
 
         [ObservableProperty]
         private string email = string.Empty;
@@ -26,25 +25,15 @@ namespace Presentation.ViewModels
         [ObservableProperty]
         private string errorMessage = string.Empty;
 
-        // **********************************************
-        // КОНСТРУКТОРИ
-        // **********************************************
+        public LoginViewModel() : this(null, null, null) { }
 
-        // ✅ 1. БЕЗПАРАМЕТРИЧНИЙ КОНСТРУКТОР (ДЛЯ ДИЗАЙНЕРА XAML)
-        public LoginViewModel() : this(null, null)
-        {
-        }
-
-        // ✅ 2. ОСНОВНИЙ КОНСТРУКТОР (ДЛЯ DI-КОНТЕЙНЕРА)
-        public LoginViewModel(INavigationService navigationService, IUserService userService)
+        // ✅ ОНОВЛЕНО: Додано IAuthService
+        public LoginViewModel(INavigationService navigationService, IUserService userService, IAuthService authService)
         {
             _navigationService = navigationService;
             _userService = userService;
+            _authService = authService;
         }
-
-        // **********************************************
-        // КОМАНДИ
-        // **********************************************
 
         [RelayCommand]
         private async Task LoginAsync(object parameter)
@@ -57,7 +46,6 @@ namespace Presentation.ViewModels
                 password = pb.Password;
             }
 
-            // Валідація
             if (string.IsNullOrWhiteSpace(Email))
             {
                 ErrorMessage = "Введіть email або нікнейм";
@@ -76,22 +64,21 @@ namespace Presentation.ViewModels
 
             try
             {
-                // ✅ ПІДКЛЮЧЕННЯ ДО БД: Перевірка користувача
                 var user = await _userService.GetUserByNicknameAsync(Email);
 
-                // Якщо не знайдено за нікнеймом, спробуємо за email
                 if (user == null)
                 {
                     var allUsers = await _userService.GetAllUsersAsync();
                     user = allUsers.FirstOrDefault(u => u.Email.Equals(Email, StringComparison.OrdinalIgnoreCase));
                 }
 
-                // Перевірка користувача та пароля
                 if (user != null && user.Password == password)
                 {
+                    // ✅ ЗБЕРІГАЄМО ПОТОЧНОГО КОРИСТУВАЧА
+                    _authService?.SetCurrentUser(user.Id, user.Nickname);
+
                     MessageBox.Show($"Ласкаво просимо, {user.Nickname}!", "Успішний вхід", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    // ✅ НАВІГАЦІЯ: Перехід на головну сторінку
                     if (_navigationService != null)
                     {
                         _navigationService.NavigateTo<MainPageViewModel>();

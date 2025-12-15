@@ -88,6 +88,7 @@ namespace Presentation
             // ========================================
             services.AddSingleton<IDataService, DataService>();
 
+            services.AddSingleton<IAuthService, AuthService>();
             services.AddSingleton<NavigationService>();
             services.AddSingleton<INavigationService>(provider => provider.GetRequiredService<NavigationService>());
             services.AddSingleton<IGameNavigationService>(provider => provider.GetRequiredService<NavigationService>());
